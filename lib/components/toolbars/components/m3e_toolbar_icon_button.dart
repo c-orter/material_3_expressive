@@ -72,11 +72,15 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
     return label != null && label.isNotEmpty;
   }
 
-  /// Whether the label is visible. [M3EToolbarLabelMode.selectedIcon] keeps
-  /// the label always visible and toggles the icon instead.
-  bool get _showLabeled => switch (widget.labelMode) {
-    M3EToolbarLabelMode.activeOnly => _hasLabel && widget.action.active,
-    M3EToolbarLabelMode.always || M3EToolbarLabelMode.selectedIcon => _hasLabel,
+  /// Whether the morphable element is currently shown. In
+  /// [M3EToolbarLabelMode.activeOnly] that is the label (inactive actions are
+  /// icon-only); in [M3EToolbarLabelMode.selectedIcon] it is the icon
+  /// (inactive actions are label-only); [M3EToolbarLabelMode.always] shows
+  /// icon + label statically.
+  bool get _morphedIn => switch (widget.labelMode) {
+    M3EToolbarLabelMode.activeOnly ||
+    M3EToolbarLabelMode.selectedIcon => _hasLabel && widget.action.active,
+    M3EToolbarLabelMode.always => _hasLabel,
   };
 
   bool get _iconAnimated =>
@@ -88,24 +92,22 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
     _labelCtrl = SingleMotionController(
       motion: _labelMotion(M3EToolbarTheme.defaults.labelSpring),
       vsync: this,
-      initialValue: _showLabeled ? 1 : 0,
+      initialValue: _morphedIn ? 1 : 0,
     );
   }
 
   @override
   void didUpdateWidget(covariant M3EToolbarIconButton oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final bool wasLabeled = switch (oldWidget.labelMode) {
-      M3EToolbarLabelMode.activeOnly =>
+    final bool wasMorphedIn = switch (oldWidget.labelMode) {
+      M3EToolbarLabelMode.activeOnly || M3EToolbarLabelMode.selectedIcon =>
         _hasLabelOf(oldWidget) && oldWidget.action.active,
-      M3EToolbarLabelMode.always ||
-      M3EToolbarLabelMode.selectedIcon => _hasLabelOf(oldWidget),
+      M3EToolbarLabelMode.always => _hasLabelOf(oldWidget),
     };
-    if (wasLabeled != _showLabeled) {
-      final spring = M3ETheme.of(context).toolbarTheme.labelSpring;
+    if (wasMorphedIn != _morphedIn && wasLabeled != _showLabeled) {
       _labelCtrl
-        ..motion = _labelMotion(spring)
-        ..animateTo(_showLabeled ? 1 : 0);
+        ..motion = _labelMotion
+        ..animateTo(_morphedIn ? 1 : 0);
     }
   }
 
@@ -232,11 +234,16 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
 
     return _buildIconButton(
       context,
-      icon: _buildLabeledRow(
-        context: context,
-        iconPx: iconPx,
-        labelStyle: labelStyle,
-        progress: t,
+      icon: Builder(
+        // Resolves inside the button subtree so IconTheme carries the
+        // button's resolved foreground (onPrimary when active/filled, the
+        // accent's on-color, error for destructive).
+        builder: (BuildContext buttonContext) => _buildLabeledRow(
+          context: buttonContext,
+          iconPx: iconPx,
+          labelStyle: labelStyle,
+          progress: t,
+        ),
       ),
       visualSize: Size(sprungWidth, visual.height),
     );
