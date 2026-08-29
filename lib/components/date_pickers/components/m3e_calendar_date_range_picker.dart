@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart' show SliverLayoutDimensions;
 import 'package:material_ui/material_ui.dart';
 
 import '../../../foundations/foundations.dart';
@@ -131,29 +132,48 @@ class _M3ECalendarDateRangePickerState
       dateTheme.weekdayStyle(theme.typeScale, theme.colorScheme),
       textScaler,
     );
-    const rowHeight = M3EDatePickerConstants.dayPickerRowHeight;
     var offset = 0.0;
+    final int firstDayOfWeekIndex = localizations.firstDayOfWeekIndex;
     for (var i = 0; i < index; i++) {
-      final DateTime month = _monthForIndex(i);
-      final daysInMonth = M3EDatePickerUtils.daysInMonth(
-        month.year,
-        month.month,
+      offset += _monthExtent(
+        i,
+        dateTheme,
+        firstDayOfWeekIndex,
+        titleHeight,
+        weekdayHeight,
       );
-      final int firstDayOffset =
-          (DateTime(month.year, month.month).weekday -
-              localizations.firstDayOfWeekIndex) %
-          7;
-      final rows = ((daysInMonth + firstDayOffset) / 7).ceil();
-      offset +=
-          16 +
-          titleHeight +
-          8 +
-          weekdayHeight +
-          dateTheme.gridPadding.top +
-          rows * rowHeight +
-          8;
     }
     return offset;
+  }
+
+  /// Height of the month item at [index], matching the item structure:
+  /// title padding (16) + title text + title padding (8) + weekday header
+  /// text + grid top padding + rows x row height + trailing gap (8).
+  ///
+  /// Fed to [ListView.builder]'s `itemExtentBuilder` so scroll-offset
+  /// resolution (including the initial anchor jump) never has to lay out
+  /// intermediate months — a wide [M3ECalendarDateRangePicker.firstDate] to
+  /// anchor span costs O(1) on the first frame instead of O(months).
+  double _monthExtent(
+    int index,
+    M3EDatePickerTheme dateTheme,
+    int firstDayOfWeekIndex,
+    double titleHeight,
+    double weekdayHeight,
+  ) {
+    final DateTime month = _monthForIndex(index);
+    final daysInMonth = M3EDatePickerUtils.daysInMonth(month.year, month.month);
+    final int firstDayOffset =
+        (DateTime(month.year, month.month).weekday - firstDayOfWeekIndex) % 7;
+    final rows = ((daysInMonth + firstDayOffset) / dateTheme.daysPerWeek)
+        .ceil();
+    return 16 +
+        titleHeight +
+        8 +
+        weekdayHeight +
+        dateTheme.gridPadding.top +
+        rows * M3EDatePickerConstants.dayPickerRowHeight +
+        8;
   }
 
   double _textHeight(String text, TextStyle style, TextScaler textScaler) {
@@ -212,10 +232,34 @@ class _M3ECalendarDateRangePickerState
     final MaterialLocalizations localizations = MaterialLocalizations.of(
       context,
     );
+    final M3EDatePickerTheme dateTheme = theme.datePickerTheme;
+    final textScaler = MediaQuery.textScalerOf(context);
+    final double titleHeight = _textHeight(
+      localizations.formatMonthYear(_monthForIndex(0)),
+      theme.typeScale.titleSmall,
+      textScaler,
+    );
+    final double weekdayHeight = _textHeight(
+      localizations.narrowWeekdays[localizations.firstDayOfWeekIndex % 7],
+      dateTheme.weekdayStyle(theme.typeScale, theme.colorScheme),
+      textScaler,
+    );
 
     return ListView.builder(
       controller: _controller,
       itemCount: _monthCount,
+      // Deterministic per-month extents: scroll-offset resolution (the
+      // initial anchor jump in particular) never lays out intermediate
+      // months, so a wide firstDate-to-anchor span is O(1) on first frame.
+      itemExtentBuilder: (int index, SliverLayoutDimensions dimensions) {
+        return _monthExtent(
+          index,
+          dateTheme,
+          localizations.firstDayOfWeekIndex,
+          titleHeight,
+          weekdayHeight,
+        );
+      },
       itemBuilder: (BuildContext context, int index) {
         final DateTime month = _monthForIndex(index);
         return Column(
