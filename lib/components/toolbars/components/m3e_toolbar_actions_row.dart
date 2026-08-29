@@ -6,6 +6,7 @@ import 'package:material_3_expressive/material_3_expressive.dart'
 
 import '../../../foundations/foundations.dart';
 import '../../icon_buttons/enums/m3e_icon_button_enums.dart';
+import '../enums/m3e_toolbar_enums.dart';
 import '../models/m3e_toolbar_item.dart';
 import '../utils/m3e_toolbar_item_layout.dart';
 import 'm3e_toolbar_icon_button.dart';
@@ -31,6 +32,7 @@ class M3EToolbarActionsRow extends StatelessWidget {
     this.expand = false,
     this.mainAxisAlignment = MainAxisAlignment.start,
     this.pillActiveSpring = true,
+    this.labelMode = M3EToolbarLabelMode.activeOnly,
     super.key,
   });
 
@@ -75,6 +77,9 @@ class M3EToolbarActionsRow extends StatelessWidget {
   /// labeled action + icon-only neighbors) and distributes leftover space
   /// evenly between actions.
   final bool pillActiveSpring;
+
+  /// labelMode.
+  final M3EToolbarLabelMode labelMode;
 
   @override
   Widget build(BuildContext context) {
@@ -206,6 +211,7 @@ class M3EToolbarActionsRow extends StatelessWidget {
         action: action,
         size: iconButtonSize,
         pillActiveSpring: pillActiveSpring,
+        labelMode: labelMode,
       ),
     );
     if (expandWidgets && item is M3EToolbarWidget) {

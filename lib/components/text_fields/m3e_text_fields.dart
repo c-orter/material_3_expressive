@@ -6,6 +6,7 @@ import 'enums/m3e_text_field_variant.dart';
 import 'styles/m3e_text_field_theme.dart';
 
 export 'enums/m3e_text_field_variant.dart';
+export 'm3e_text_form_field.dart';
 export 'styles/m3e_text_field_theme.dart';
 
 /// A Material 3 Expressive text field.
@@ -34,6 +35,11 @@ class M3ETextField extends StatefulWidget {
     this.onSubmitted,
     this.onTapOutside,
     this.maxLines = 1,
+    this.readOnly = false,
+    this.onTap,
+    this.content,
+    this.alwaysFloating = false,
+    this.autofillHints,
     super.key,
   });
 
@@ -88,6 +94,24 @@ class M3ETextField extends StatefulWidget {
 
   /// maxLines.
   final int maxLines;
+
+  /// When true, the editable text ignores pointer input; [onTap] still fires
+  /// (e.g. to open a picker from a read-only field).
+  final bool readOnly;
+
+  /// Called when the field is tapped, before focus is requested. Focus is
+  /// only requested when [readOnly] is false.
+  final VoidCallback? onTap;
+
+  /// Optional content rendered below the input line, inside the field
+  /// container (e.g. inline chips).
+  final Widget? content;
+
+  /// When true, the label floats even when the field is empty and unfocused.
+  final bool alwaysFloating;
+
+  /// autofillHints.
+  final List<String>? autofillHints;
 
   /// The hasError.
 
@@ -198,7 +222,10 @@ class _M3ETextFieldState extends State<M3ETextField> {
       child: GestureDetector(
         onTap: () {
           M3EFocusInteraction.instance.notePointerInteraction();
-          _focusNode.requestFocus();
+          widget.onTap?.call();
+          if (!widget.readOnly) {
+            _focusNode.requestFocus();
+          }
         },
         behavior: HitTestBehavior.opaque,
         // Keyboard focus ring sits outside the field, on top of the thicker
@@ -252,16 +279,6 @@ class _M3ETextFieldState extends State<M3ETextField> {
         SizedBox(width: textFieldTheme.iconGap),
       ],
       Expanded(child: _buildField(theme, scheme, accent)),
-      if (widget.trailing != null) ...<Widget>[
-        SizedBox(width: textFieldTheme.iconGap),
-        IconTheme.merge(
-          data: IconThemeData(
-            color: widget.hasError ? scheme.error : scheme.onSurfaceVariant,
-            size: textFieldTheme.iconSize,
-          ),
-          child: widget.trailing!,
-        ),
-      ],
     ];
   }
 
@@ -277,52 +294,83 @@ class _M3ETextFieldState extends State<M3ETextField> {
       inputStyle: inputStyle,
     );
 
+    // Trailing sits on the input line itself, so trailing actions (add,
+    // visibility toggles) stay inline with the editable text.
+    final Widget line = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Expanded(child: editable),
+        if (widget.trailing != null) ...<Widget>[
+          SizedBox(width: textFieldTheme.iconGap),
+          IconTheme.merge(
+            data: IconThemeData(
+              color: widget.hasError ? scheme.error : scheme.onSurfaceVariant,
+              size: textFieldTheme.iconSize,
+            ),
+            child: widget.trailing!,
+          ),
+        ],
+      ],
+    );
+
     if (widget.label == null) {
       return _contentBox(
         textFieldTheme,
-        child: Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: editable,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[line, if (widget.content != null) widget.content!],
         ),
       );
     }
 
-    final TextStyle labelStyle = _floating
+    final bool labelFloating = _floating || widget.alwaysFloating;
+    final TextStyle labelStyle = labelFloating
         ? theme.typeScale.bodySmall.copyWith(color: accent)
         : theme.typeScale.bodyLarge.copyWith(color: scheme.onSurfaceVariant);
     // The slot is reserved in both states, so only the label moves on focus.
     final double labelSlot = textFieldTheme.labelSlotHeight(theme.typeScale);
 
+    // The label overlay spans just the label slot + input line, so at rest it
+    // settles onto the input line and custom content never overlaps it.
     return _contentBox(
       textFieldTheme,
-      child: Stack(
-        clipBehavior: Clip.none,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          Stack(
+            clipBehavior: Clip.none,
             children: <Widget>[
-              SizedBox(height: labelSlot),
-              editable,
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  SizedBox(height: labelSlot),
+                  line,
+                ],
+              ),
+              // Rests on the input line and floats up into the slot.
+              Positioned.fill(
+                child: AnimatedAlign(
+                  duration: M3EMotion.short3,
+                  curve: M3EMotion.standard,
+                  alignment: labelFloating
+                      ? AlignmentDirectional.topStart
+                      : AlignmentDirectional.centerStart,
+                  child: AnimatedDefaultTextStyle(
+                    duration: M3EMotion.short3,
+                    curve: M3EMotion.standard,
+                    style: labelStyle,
+                    child: Text(widget.label!),
+                  ),
+                ),
+              ),
             ],
           ),
-          // Rests centered on the field and floats up into the slot.
-          Positioned.fill(
-            child: AnimatedAlign(
-              duration: M3EMotion.short3,
-              curve: M3EMotion.standard,
-              alignment: _floating
-                  ? AlignmentDirectional.topStart
-                  : AlignmentDirectional.centerStart,
-              child: AnimatedDefaultTextStyle(
-                duration: M3EMotion.short3,
-                curve: M3EMotion.standard,
-                style: labelStyle,
-                child: Text(widget.label!),
-              ),
-            ),
-          ),
+          if (widget.content != null) widget.content!,
         ],
       ),
     );
@@ -350,6 +398,7 @@ class _M3ETextFieldState extends State<M3ETextField> {
     required Color accent,
     required TextStyle inputStyle,
   }) {
+<<<<<<< HEAD
     return CallbackShortcuts(
       bindings: M3EFocus.editableInputShortcuts(_focusNode),
       child: EditableText(
@@ -369,8 +418,28 @@ class _M3ETextFieldState extends State<M3ETextField> {
         selectionColor: scheme.primary.withValues(
           alpha: theme.textFieldTheme.selectionOpacity,
         ),
+=======
+    final Widget editable = EditableText(
+      controller: _controller,
+      focusNode: _focusNode,
+      readOnly: widget.readOnly || !widget.enabled,
+      obscureText: widget.obscureText,
+      maxLines: widget.maxLines,
+      keyboardType: widget.keyboardType,
+      textInputAction: widget.textInputAction,
+      inputFormatters: widget.inputFormatters,
+      autofillHints: widget.autofillHints,
+      onSubmitted: widget.onSubmitted,
+      onTapOutside: (_) {},
+      style: inputStyle,
+      cursorColor: accent,
+      backgroundCursorColor: scheme.outlineVariant,
+      selectionColor: scheme.primary.withValues(
+        alpha: theme.textFieldTheme.selectionOpacity,
+>>>>>>> 8667f39 (feat: FicShelf contributions — form field wrapper, toolbar label modes, range calendar anchoring)
       ),
     );
+    return widget.readOnly ? IgnorePointer(child: editable) : editable;
   }
 
   Widget _buildSupporting(M3EThemeData theme) {

@@ -20,6 +20,7 @@ class M3EToolbarAction extends M3EToolbarItem {
     this.enabled = true,
     this.label,
     this.isDestructive = false,
+    this.color,
     this.active = false,
     this.isExpandTrigger = false,
   });
@@ -48,6 +49,11 @@ class M3EToolbarAction extends M3EToolbarItem {
 
   /// When true, the overflow menu entry uses the error color.
   final bool isDestructive;
+
+  /// Optional accent color for this action. Tints the icon/label; when the
+  /// action is active, the button is filled with the accent and the content
+  /// uses the accent's on-color.
+  final Color? color;
 
   /// When true, uses filled / trigger-like coloring.
   ///

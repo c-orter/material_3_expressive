@@ -1,20 +1,23 @@
-import 'package:flutter/widgets.dart';
 import 'package:material_3_expressive/material_3_expressive.dart'
     show M3ETheme, M3EToolbar;
+import 'package:material_ui/material_ui.dart';
 import 'package:motor/motor.dart';
 
 import '../../../foundations/foundations.dart';
 import '../../icon_buttons/m3e_icon_buttons.dart';
+import '../enums/m3e_toolbar_enums.dart';
 import '../models/m3e_toolbar_item.dart';
 import '../styles/m3e_toolbar_theme.dart';
 
 /// Inline icon action for [M3EToolbar] — thin adapter over [M3EIconButton].
 ///
-/// When [M3EToolbarAction.label] is set, the label lives **inside** the button
-/// pill. Width springs between the icon-button visual size (inactive, icon
-/// only) and the natural icon+label width (active). Layout width follows the
-/// spring so the parent toolbar pill grows/shrinks in sync — unless the parent
-/// reserves a fixed selection width (`pillActiveSpring: false`).
+/// Label visibility follows the toolbar's [M3EToolbarLabelMode]:
+/// - [M3EToolbarLabelMode.activeOnly]: the label lives inside the button pill
+///   and springs in when the action becomes active (width springs between the
+///   icon-button visual size and the natural icon+label width).
+/// - [M3EToolbarLabelMode.always]: icon + label render statically.
+/// - [M3EToolbarLabelMode.selectedIcon]: the label is always visible and the
+///   icon springs in on the active action (navigation-bar-like).
 class M3EToolbarIconButton extends StatefulWidget {
   /// M3EToolbarIconButton.
   const M3EToolbarIconButton({
@@ -23,6 +26,7 @@ class M3EToolbarIconButton extends StatefulWidget {
     this.onPressed,
     this.variant,
     this.pillActiveSpring = true,
+    this.labelMode = M3EToolbarLabelMode.activeOnly,
     super.key,
   });
 
@@ -46,6 +50,9 @@ class M3EToolbarIconButton extends StatefulWidget {
   /// follows the morph spring so padding and animation stay correct.
   final bool pillActiveSpring;
 
+  /// labelMode.
+  final M3EToolbarLabelMode labelMode;
+
   @override
   State<M3EToolbarIconButton> createState() => _M3EToolbarIconButtonState();
 }
@@ -65,7 +72,15 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
     return label != null && label.isNotEmpty;
   }
 
-  bool get _showLabeled => _hasLabel && widget.action.active;
+  /// Whether the label is visible. [M3EToolbarLabelMode.selectedIcon] keeps
+  /// the label always visible and toggles the icon instead.
+  bool get _showLabeled => switch (widget.labelMode) {
+    M3EToolbarLabelMode.activeOnly => _hasLabel && widget.action.active,
+    M3EToolbarLabelMode.always || M3EToolbarLabelMode.selectedIcon => _hasLabel,
+  };
+
+  bool get _iconAnimated =>
+      widget.labelMode == M3EToolbarLabelMode.selectedIcon && _hasLabel;
 
   @override
   void initState() {
@@ -80,16 +95,23 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
   @override
   void didUpdateWidget(covariant M3EToolbarIconButton oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final bool wasLabeled =
-        oldWidget.action.active &&
-        oldWidget.action.label != null &&
-        oldWidget.action.label!.isNotEmpty;
+    final bool wasLabeled = switch (oldWidget.labelMode) {
+      M3EToolbarLabelMode.activeOnly =>
+        _hasLabelOf(oldWidget) && oldWidget.action.active,
+      M3EToolbarLabelMode.always ||
+      M3EToolbarLabelMode.selectedIcon => _hasLabelOf(oldWidget),
+    };
     if (wasLabeled != _showLabeled) {
       final spring = M3ETheme.of(context).toolbarTheme.labelSpring;
       _labelCtrl
         ..motion = _labelMotion(spring)
         ..animateTo(_showLabeled ? 1 : 0);
     }
+  }
+
+  bool _hasLabelOf(M3EToolbarIconButton w) {
+    final String? label = w.action.label;
+    return label != null && label.isNotEmpty;
   }
 
   @override
@@ -101,7 +123,7 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
   @override
   Widget build(BuildContext context) {
     if (!_hasLabel) {
-      return _buildIconButton(icon: Icon(widget.action.icon));
+      return _buildIconButton(context, icon: Icon(widget.action.icon));
     }
     return AnimatedBuilder(
       animation: _labelCtrl,
@@ -121,7 +143,53 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
       ? (widget.onPressed ?? widget.action.onPressed)
       : null;
 
-  Widget _buildIconButton({required Widget icon, Size? visualSize}) {
+  /// Per-action accent / destructive coloring.
+  M3EIconButtonDecoration? _decorationFor(BuildContext context) {
+    final Color? accent = widget.action.color;
+    if (accent != null) {
+      return M3EIconButtonDecoration(
+        backgroundColor: widget.action.active
+            ? WidgetStatePropertyAll<Color>(accent)
+            : null,
+        foregroundColor: WidgetStatePropertyAll<Color>(
+          widget.action.active ? _onColorForAccent(context, accent) : accent,
+        ),
+      );
+    }
+    if (widget.action.isDestructive) {
+      return M3EIconButtonDecoration(
+        foregroundColor: WidgetStatePropertyAll<Color>(
+          M3ETheme.of(context).colorScheme.error,
+        ),
+      );
+    }
+    return null;
+  }
+
+  Color _onColorForAccent(BuildContext context, Color accent) {
+    final scheme = M3ETheme.of(context).colorScheme;
+    if (accent == scheme.primary) {
+      return scheme.onPrimary;
+    }
+    if (accent == scheme.secondary) {
+      return scheme.onSecondary;
+    }
+    if (accent == scheme.tertiary) {
+      return scheme.onTertiary;
+    }
+    if (accent == scheme.error) {
+      return scheme.onError;
+    }
+    return ThemeData.estimateBrightnessForColor(accent) == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+  }
+
+  Widget _buildIconButton(
+    BuildContext context, {
+    required Widget icon,
+    Size? visualSize,
+  }) {
     return M3EIconButton(
       icon: icon,
       onPressed: _resolvedOnPressed,
@@ -130,6 +198,7 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
       size: widget.size,
       variant: _resolvedVariant,
       visualSize: visualSize,
+      decoration: _decorationFor(context),
     );
   }
 
@@ -150,12 +219,21 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
       labelStyle,
       MediaQuery.textScalerOf(context),
     );
-    final expandedWidth =
+    final double expandedWidth =
         visual.width + M3EToolbarIconButton.labelGap + labelWidth;
-    final sprungWidth = visual.width + (expandedWidth - visual.width) * t;
+    // selectedIcon starts from a label-only pill; other modes start from the
+    // icon-only visual width.
+    final double collapsedWidth =
+        widget.labelMode == M3EToolbarLabelMode.selectedIcon
+        ? labelWidth + 16
+        : visual.width;
+    final double sprungWidth =
+        collapsedWidth + (expandedWidth - collapsedWidth) * t;
 
     return _buildIconButton(
+      context,
       icon: _buildLabeledRow(
+        context: context,
         iconPx: iconPx,
         labelStyle: labelStyle,
         progress: t,
@@ -165,15 +243,47 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
   }
 
   Widget _buildLabeledRow({
+    required BuildContext context,
     required double iconPx,
     required TextStyle labelStyle,
     required double progress,
   }) {
+    final Widget icon = Icon(widget.action.icon, size: iconPx);
+    final Widget label = Text(
+      widget.action.label!,
+      style: labelStyle.copyWith(color: IconTheme.of(context).color),
+      maxLines: 1,
+      overflow: TextOverflow.clip,
+      softWrap: false,
+    );
+
+    if (_iconAnimated) {
+      // Label is always visible; the icon morphs in on activation.
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          if (progress > 0.01)
+            ClipRect(
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                widthFactor: progress,
+                child: Opacity(opacity: progress, child: icon),
+              ),
+            ),
+          if (progress > 0.01)
+            SizedBox(width: M3EToolbarIconButton.labelGap * progress),
+          label,
+        ],
+      );
+    }
+
+    // Icon is always visible; the label morphs in on activation.
     return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        Icon(widget.action.icon, size: iconPx),
+        icon,
         if (progress > 0.01)
           ClipRect(
             child: Align(
@@ -185,19 +295,7 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
                   padding: const EdgeInsetsDirectional.only(
                     start: M3EToolbarIconButton.labelGap,
                   ),
-                  child: Builder(
-                    builder: (BuildContext context) {
-                      return Text(
-                        widget.action.label!,
-                        style: labelStyle.copyWith(
-                          color: IconTheme.of(context).color,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.clip,
-                        softWrap: false,
-                      );
-                    },
-                  ),
+                  child: label,
                 ),
               ),
             ),

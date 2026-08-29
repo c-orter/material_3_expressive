@@ -21,6 +21,20 @@ enum M3EToolbarColorStyle {
   vibrant,
 }
 
+/// How labeled actions render their label relative to the active state.
+enum M3EToolbarLabelMode {
+  /// Label morphs in on the active action only; inactive actions stay
+  /// icon-only (Material floating-toolbar default).
+  activeOnly,
+
+  /// Every labeled action always shows icon + label.
+  always,
+
+  /// Inverted emphasis: inactive labeled actions are label-only and the
+  /// active action shows icon + label (navigation-bar-like).
+  selectedIcon,
+}
+
 /// Edge used for docked placement and single-edge safe-area padding.
 ///
 /// Floating toolbars with [M3EToolbar.safeArea] apply this edge as an

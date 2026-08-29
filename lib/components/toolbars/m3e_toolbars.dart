@@ -93,6 +93,7 @@ class M3EToolbar extends StatefulWidget implements PreferredSizeWidget {
     this.onActiveIndexChanged,
     this.fabExpandsToolbar = true,
     this.pillActiveSpring = true,
+    this.labelMode = M3EToolbarLabelMode.activeOnly,
     super.key,
   }) : placement = M3EToolbarPlacement.floating;
 
@@ -136,6 +137,7 @@ class M3EToolbar extends StatefulWidget implements PreferredSizeWidget {
     this.onActiveIndexChanged,
     this.fabExpandsToolbar = true,
     this.pillActiveSpring = true,
+    this.labelMode = M3EToolbarLabelMode.activeOnly,
     super.key,
   }) : placement = M3EToolbarPlacement.floating;
 
@@ -171,6 +173,7 @@ class M3EToolbar extends StatefulWidget implements PreferredSizeWidget {
     this.exitExtent,
     this.activeIndex,
     this.onActiveIndexChanged,
+    this.labelMode = M3EToolbarLabelMode.activeOnly,
     super.key,
   }) : placement = M3EToolbarPlacement.docked,
        axis = Axis.horizontal,
@@ -289,6 +292,14 @@ class M3EToolbar extends StatefulWidget implements PreferredSizeWidget {
   /// action labels still morph.
   final bool pillActiveSpring;
 
+  /// How labeled actions render their label relative to the active state.
+  ///
+  /// [M3EToolbarLabelMode.activeOnly] (default) morphs the label in on the
+  /// active action; [M3EToolbarLabelMode.always] shows icon + label on every
+  /// labeled action; [M3EToolbarLabelMode.selectedIcon] renders inactive
+  /// labeled actions label-only and shows the icon on the active action.
+  final M3EToolbarLabelMode labelMode;
+
   /// fabPosition.
   final M3EToolbarFabPosition fabPosition;
 
@@ -403,6 +414,7 @@ class _M3EToolbarState extends State<M3EToolbar> with TickerProviderStateMixin {
       enabled: item.enabled,
       label: item.label,
       isDestructive: item.isDestructive,
+      color: item.color,
       active: active,
       isExpandTrigger: showAsTrigger,
     );

@@ -2,6 +2,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../../foundations/foundations.dart';
 import '../models/m3e_date_picker_models.dart';
+import '../res/m3e_date_picker_constants.dart';
+import '../styles/m3e_date_picker_theme.dart';
 import '../utils/m3e_date_picker_utils.dart';
 import 'm3e_day_picker.dart';
 
@@ -53,6 +55,7 @@ class M3ECalendarDateRangePicker extends StatefulWidget {
 class _M3ECalendarDateRangePickerState
     extends State<M3ECalendarDateRangePicker> {
   late ScrollController _controller;
+  bool _scrollInitialized = false;
   late DateTime _firstDate;
   late DateTime _lastDate;
   late DateTime _currentDate;
@@ -62,7 +65,6 @@ class _M3ECalendarDateRangePickerState
   @override
   void initState() {
     super.initState();
-    _controller = ScrollController();
     _firstDate = M3EDatePickerUtils.dateOnly(widget.firstDate);
     _lastDate = M3EDatePickerUtils.dateOnly(widget.lastDate);
     _currentDate = M3EDatePickerUtils.dateOnly(
@@ -74,6 +76,94 @@ class _M3ECalendarDateRangePickerState
     _endDate = widget.initialEndDate == null
         ? null
         : M3EDatePickerUtils.dateOnly(widget.initialEndDate!);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_scrollInitialized) {
+      return;
+    }
+    _scrollInitialized = true;
+    // Anchor the month list on the selected start date, falling back to the
+    // current date — the list itself starts at [firstDate], which can be
+    // years away from anything the user cares about.
+    final DateTime anchor = M3EDatePickerUtils.dateOnly(
+      _startDate ?? _currentDate,
+    );
+    final DateTime clamped = anchor.isBefore(_firstDate)
+        ? _firstDate
+        : (anchor.isAfter(_lastDate) ? _lastDate : anchor);
+    final int index = M3EDatePickerUtils.monthDelta(_firstDate, clamped);
+    _controller = ScrollController(
+      initialScrollOffset: _offsetForMonthIndex(
+        index.clamp(0, _monthCount - 1),
+        M3ETheme.of(context),
+        MaterialLocalizations.of(context),
+        MediaQuery.textScalerOf(context),
+      ),
+    );
+  }
+
+  /// Exact scroll offset of the month at [index]: every month item is
+  ///
+  /// title padding (16) + title text + title padding (8)
+  /// + weekday header text + grid top padding + rows x row height + 8,
+  ///
+  /// so the offsets can be summed deterministically.
+  double _offsetForMonthIndex(
+    int index,
+    M3EThemeData theme,
+    MaterialLocalizations localizations,
+    TextScaler textScaler,
+  ) {
+    if (index <= 0) {
+      return 0;
+    }
+    final M3EDatePickerTheme dateTheme = theme.datePickerTheme;
+    final double titleHeight = _textHeight(
+      localizations.formatMonthYear(_monthForIndex(0)),
+      theme.typeScale.titleSmall,
+      textScaler,
+    );
+    final double weekdayHeight = _textHeight(
+      localizations.narrowWeekdays[localizations.firstDayOfWeekIndex % 7],
+      dateTheme.weekdayStyle(theme.typeScale, theme.colorScheme),
+      textScaler,
+    );
+    const rowHeight = M3EDatePickerConstants.dayPickerRowHeight;
+    var offset = 0.0;
+    for (var i = 0; i < index; i++) {
+      final DateTime month = _monthForIndex(i);
+      final daysInMonth = M3EDatePickerUtils.daysInMonth(
+        month.year,
+        month.month,
+      );
+      final int firstDayOffset =
+          (DateTime(month.year, month.month).weekday -
+              localizations.firstDayOfWeekIndex) %
+          7;
+      final rows = ((daysInMonth + firstDayOffset) / 7).ceil();
+      offset +=
+          16 +
+          titleHeight +
+          8 +
+          weekdayHeight +
+          dateTheme.gridPadding.top +
+          rows * rowHeight +
+          8;
+    }
+    return offset;
+  }
+
+  double _textHeight(String text, TextStyle style, TextScaler textScaler) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: textScaler,
+      maxLines: 1,
+    )..layout();
+    return painter.height;
   }
 
   @override
