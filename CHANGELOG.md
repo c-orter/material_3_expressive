@@ -1,10 +1,3 @@
-## Unreleased
-
-### Added
-
-* `M3ELoadingIndicator` supports instance-level indicator and container sizing.
-* Loading indicators support custom container shapes and interpolated indicator colors.
-
 ## 1.1.2
 
 ### Added
