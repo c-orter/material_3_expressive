@@ -398,18 +398,18 @@ class _M3ETextFieldState extends State<M3ETextField> {
     required Color accent,
     required TextStyle inputStyle,
   }) {
-<<<<<<< HEAD
-    return CallbackShortcuts(
+    final Widget editable = CallbackShortcuts(
       bindings: M3EFocus.editableInputShortcuts(_focusNode),
       child: EditableText(
         controller: _controller,
         focusNode: _focusNode,
-        readOnly: !widget.enabled,
+        readOnly: widget.readOnly || !widget.enabled,
         obscureText: widget.obscureText,
         maxLines: widget.maxLines,
         keyboardType: widget.keyboardType,
         textInputAction: widget.textInputAction,
         inputFormatters: widget.inputFormatters,
+        autofillHints: widget.autofillHints,
         onSubmitted: widget.onSubmitted,
         onTapOutside: (_) {},
         style: inputStyle,
@@ -418,25 +418,6 @@ class _M3ETextFieldState extends State<M3ETextField> {
         selectionColor: scheme.primary.withValues(
           alpha: theme.textFieldTheme.selectionOpacity,
         ),
-=======
-    final Widget editable = EditableText(
-      controller: _controller,
-      focusNode: _focusNode,
-      readOnly: widget.readOnly || !widget.enabled,
-      obscureText: widget.obscureText,
-      maxLines: widget.maxLines,
-      keyboardType: widget.keyboardType,
-      textInputAction: widget.textInputAction,
-      inputFormatters: widget.inputFormatters,
-      autofillHints: widget.autofillHints,
-      onSubmitted: widget.onSubmitted,
-      onTapOutside: (_) {},
-      style: inputStyle,
-      cursorColor: accent,
-      backgroundCursorColor: scheme.outlineVariant,
-      selectionColor: scheme.primary.withValues(
-        alpha: theme.textFieldTheme.selectionOpacity,
->>>>>>> 8667f39 (feat: FicShelf contributions — form field wrapper, toolbar label modes, range calendar anchoring)
       ),
     );
     return widget.readOnly ? IgnorePointer(child: editable) : editable;

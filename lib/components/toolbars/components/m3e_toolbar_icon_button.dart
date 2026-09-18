@@ -104,9 +104,10 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
         _hasLabelOf(oldWidget) && oldWidget.action.active,
       M3EToolbarLabelMode.always => _hasLabelOf(oldWidget),
     };
-    if (wasMorphedIn != _morphedIn && wasLabeled != _showLabeled) {
+    if (wasMorphedIn != _morphedIn) {
+      final spring = M3ETheme.of(context).toolbarTheme.labelSpring;
       _labelCtrl
-        ..motion = _labelMotion
+        ..motion = _labelMotion(spring)
         ..animateTo(_morphedIn ? 1 : 0);
     }
   }
