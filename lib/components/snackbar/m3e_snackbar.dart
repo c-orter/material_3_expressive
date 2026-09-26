@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
-import 'package:material_ui/material_ui.dart' show MaterialTapTargetSize;
+import 'package:material_ui/material_ui.dart'
+    show Material, MaterialTapTargetSize, MaterialType;
 
 import '../../foundations/foundations.dart';
 import '../buttons/m3e_buttons.dart';
@@ -290,21 +291,28 @@ class M3ESnackbar extends StatelessWidget {
     return Semantics(
       liveRegion: true,
       container: true,
-      child: Container(
-        constraints: BoxConstraints(
-          minHeight: minHeight,
-          maxWidth: snackTheme.maxWidth,
-        ),
-        padding: padding,
-        decoration: BoxDecoration(
-          color: snackTheme.containerColor(scheme),
-          borderRadius: snackTheme.borderRadius,
-          boxShadow: M3EElevation.shadows(
-            snackTheme.elevation,
-            shadowColor: scheme.shadow,
+      // The bar's chrome is a bare Container, so its subtree has no Material
+      // ancestor: bare Text falls back to the debug DefaultTextStyle (yellow
+      // double-underline). The transparency Material supplies one without
+      // adding a second background or elevation.
+      child: Material(
+        type: MaterialType.transparency,
+        child: Container(
+          constraints: BoxConstraints(
+            minHeight: minHeight,
+            maxWidth: snackTheme.maxWidth,
           ),
+          padding: padding,
+          decoration: BoxDecoration(
+            color: snackTheme.containerColor(scheme),
+            borderRadius: snackTheme.borderRadius,
+            boxShadow: M3EElevation.shadows(
+              snackTheme.elevation,
+              shadowColor: scheme.shadow,
+            ),
+          ),
+          child: body,
         ),
-        child: body,
       ),
     );
   }

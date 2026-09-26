@@ -47,6 +47,10 @@ void _registerSnackbarBehaviorTests() {
     'plain snackbar auto-dismisses after default duration',
     _plainSnackbarAutoDismissesAfterDefaultDuration,
   );
+  testWidgets(
+    'M3ESnackbar gives its content a Material ancestor',
+    _m3esnackbarGivesContentAMaterialAncestor,
+  );
 }
 
 Future<void> _singleLineSnackbarWithActionStaysAtMinHeight(
@@ -276,4 +280,36 @@ Future<void> _plainSnackbarAutoDismissesAfterDefaultDuration(
   await tester.pump(const Duration(seconds: 4));
   await tester.pump(const Duration(milliseconds: 300));
   expect(find.text('Draft saved'), findsNothing);
+}
+
+/// The bar's chrome is a bare Container, so without an explicit Material
+/// ancestor its text falls back to the debug DefaultTextStyle (yellow
+/// double-underline).
+Future<void> _m3esnackbarGivesContentAMaterialAncestor(
+  WidgetTester tester,
+) async {
+  await tester.pumpWidget(
+    _host(
+      Builder(
+        builder: (BuildContext context) {
+          return M3EButton(
+            onPressed: () => M3ESnackbar.show(context, message: 'Draft saved'),
+            child: const Text('Show'),
+          );
+        },
+      ),
+    ),
+  );
+
+  await tester.tap(find.text('Show'));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
+
+  expect(
+    find.ancestor(
+      of: find.text('Draft saved'),
+      matching: find.byType(Material),
+    ),
+    findsOneWidget,
+  );
 }
