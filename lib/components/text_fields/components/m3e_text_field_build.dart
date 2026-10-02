@@ -237,10 +237,7 @@ extension _M3ETextFieldBuild on _M3ETextFieldState {
     double height,
   ) {
     final bool canClear =
-        widget.showClearButton &&
-        _populated &&
-        widget.enabled &&
-        !widget.readOnly;
+        widget.showClearButton && _populated && widget.enabled;
     final slots = <Widget>[
       if (canClear)
         _affordance(
@@ -336,7 +333,10 @@ extension _M3ETextFieldBuild on _M3ETextFieldState {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[inputRow, widget.content!],
           );
-    return Padding(padding: padding, child: child);
+    return Padding(
+      padding: padding,
+      child: child,
+    );
   }
 
   Widget _buildInputRow(
