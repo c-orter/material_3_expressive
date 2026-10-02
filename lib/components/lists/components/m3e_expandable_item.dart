@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:motor/motor.dart';
 
 import '../../../foundations/foundations.dart';
-import '../../cards/m3e_cards.dart';
+import '../../cards/enums/m3e_card_variant.dart';
 import '../../tooltips/m3e_tooltips.dart';
 import '../enums/m3e_expandable_enums.dart';
 import '../enums/m3e_list_selection_enums.dart';
@@ -20,10 +20,18 @@ import 'm3e_expandable_expanded.dart';
 import 'm3e_expandable_nest_scope.dart';
 import 'm3e_expandable_snap_collapse.dart';
 import 'm3e_expandable_sublist.dart';
+import 'm3e_list_drag_proxy_scope.dart';
 import 'm3e_list_feature_scope.dart';
+import 'm3e_list_focus_ring.dart';
+import 'm3e_list_item_scope.dart';
+import 'm3e_list_key_target.dart';
+import 'm3e_list_keyboard.dart';
 import 'm3e_list_reorder_exclude.dart';
+import 'm3e_list_row_surface.dart';
+import 'm3e_list_trailing_override.dart';
 
 part 'm3e_expandable_item_body.dart';
+part 'm3e_expandable_item_interaction.dart';
 
 /// M3EExpandableHeaderBuilder.
 
@@ -66,7 +74,11 @@ class M3EExpandableItem extends StatefulWidget {
     required this.expandMotion,
     required this.collapseMotion,
     required this.onToggle,
+    this.onTransform,
+    this.onTransformAnchor,
     this.expanded,
+    this.nestVariant,
+    this.trailingGap,
   });
 
   /// index.
@@ -100,6 +112,23 @@ class M3EExpandableItem extends StatefulWidget {
   /// onToggle.
   final VoidCallback onToggle;
 
+  /// Opens a container transform instead of expanding in place.
+  final VoidCallback? onTransform;
+
+  /// Reports the resting row context used to measure the morph origin.
+  final ValueChanged<BuildContext>? onTransformAnchor;
+
+  /// Variant a nested sublist inherits when it does not set its own.
+  final M3ECardVariant? nestVariant;
+
+  /// Overrides the gap trailing this row, independent of [decoration].
+  ///
+  /// [decoration]'s own gap still separates a header from its nested sublist
+  /// (see [M3EExpandableSublist]) — this only overrides the space between
+  /// this row and the next one. Defaults to [M3EExpandableStyle.gap] when
+  /// null (e.g. when the reorder host supplies row spacing itself).
+  final double? trailingGap;
+
   @override
   State<M3EExpandableItem> createState() => _M3EExpandableItemState();
 }
@@ -109,9 +138,18 @@ class _M3EExpandableItemState extends State<M3EExpandableItem>
   late final SingleMotionController _expandCtrl;
 
   bool _isPressed = false;
+  bool _hovered = false;
+
+  /// Fallback toggle node when the item is not inside a list keyboard group.
+  final FocusNode _ownToggleFocusNode = FocusNode();
+
+  /// Toggle node registered with the list keyboard group, so a header that
+  /// owns its own tap target joins the list's arrow order and single Tab stop.
+  M3EListKeyboardRegistration? _toggleRegistration;
 
   /// Node of the item's single toggle target (whole card or header row).
-  final FocusNode _toggleFocusNode = FocusNode();
+  FocusNode get _toggleFocusNode =>
+      _toggleRegistration?.node ?? _ownToggleFocusNode;
   bool _focused = false;
 
   double? _collapsedHeight;
@@ -126,9 +164,17 @@ class _M3EExpandableItemState extends State<M3EExpandableItem>
 
     _expandCtrl = SingleMotionController(motion: motion, vsync: this)
       ..value = widget.isExpanded ? 1.0 : 0.0;
-    _toggleFocusNode.addListener(_handleToggleFocusChanged);
+    _ownToggleFocusNode.addListener(_handleToggleFocusChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reportAnchor());
     FocusManager.instance.addHighlightModeListener(_handleHighlightModeChanged);
     M3EFocusInteraction.instance.addListener(_handleToggleFocusChanged);
+  }
+
+  void _reportAnchor() {
+    if (!mounted || M3EListDragProxyScope.maybeOf(context) != null) {
+      return;
+    }
+    widget.onTransformAnchor?.call(context);
   }
 
   void _handleHighlightModeChanged(FocusHighlightMode mode) {
@@ -136,9 +182,36 @@ class _M3EExpandableItemState extends State<M3EExpandableItem>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncToggleRegistration();
+  }
+
+  void _syncToggleRegistration() {
+    final M3EListKeyboardBinding? binding =
+        M3EListDragProxyScope.maybeOf(context) != null
+        ? null
+        : M3EListKeyboardGroup.maybeOf(context);
+    final M3EListKeyboardRegistration? current = _toggleRegistration;
+    if (current != null && (binding == null || current.index != widget.index)) {
+      current.node.removeListener(_handleToggleFocusChanged);
+      current.dispose();
+      _toggleRegistration = null;
+    }
+    if (_toggleRegistration == null && binding != null) {
+      _toggleRegistration = binding.register(index: widget.index)
+        ..node.addListener(_handleToggleFocusChanged);
+    }
+  }
+
+  @override
   void didUpdateWidget(covariant M3EExpandableItem oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.index != widget.index) {
+      _syncToggleRegistration();
+    }
 
+    _reportAnchor();
     if (oldWidget.isExpanded != widget.isExpanded) {
       final bool snap = M3EExpandableSnapCollapse.of(context);
       if (snap) {
@@ -156,6 +229,13 @@ class _M3EExpandableItemState extends State<M3EExpandableItem>
   void _handleTapDown() => setState(() => _isPressed = true);
   void _handleTapUp() => setState(() => _isPressed = false);
   void _handleTapCancel() => setState(() => _isPressed = false);
+
+  void _setHovered(bool value) {
+    if (_hovered == value) {
+      return;
+    }
+    setState(() => _hovered = value);
+  }
 
   void _handleCardStateChanged(M3EInteractionState state) {
     if (_isPressed == state.pressed) {
@@ -180,9 +260,12 @@ class _M3EExpandableItemState extends State<M3EExpandableItem>
     FocusManager.instance.removeHighlightModeListener(
       _handleHighlightModeChanged,
     );
-    _toggleFocusNode
+    _ownToggleFocusNode
       ..removeListener(_handleToggleFocusChanged)
       ..dispose();
+    _toggleRegistration?.node.removeListener(_handleToggleFocusChanged);
+    _toggleRegistration?.dispose();
+    _toggleRegistration = null;
     _expandCtrl.dispose();
     super.dispose();
   }
@@ -207,7 +290,7 @@ class _M3EExpandableItemState extends State<M3EExpandableItem>
       return m3eExpandableParentRadius(
         globalPosition: calculateCardPosition(widget.index, widget.totalCount),
         outerRadius: d.outerRadius,
-        innerRadius: _isPressed ? d.pressedRadius : d.innerRadius,
+        innerRadius: d.innerRadius,
         isExpanded: widget.isExpanded,
         hasSublist: true,
       );
@@ -225,7 +308,7 @@ class _M3EExpandableItemState extends State<M3EExpandableItem>
       return BorderRadius.circular(d.outerRadius);
     }
 
-    final effectiveInnerRadius = _isPressed ? d.pressedRadius : d.innerRadius;
+    final effectiveInnerRadius = d.innerRadius;
 
     if (isFirst) {
       return BorderRadius.vertical(
@@ -265,13 +348,15 @@ class _M3EExpandableItemState extends State<M3EExpandableItem>
       );
     }
 
+    final double trailingGap = widget.trailingGap ?? d.gap;
+
     // Same local reading-order group as dropdown panel items: header, then
     // revealed sublist rows, then the next sibling outside this group.
     return RepaintBoundary(
       child: Padding(
         padding: d.margin ?? EdgeInsets.zero,
         child: Padding(
-          padding: EdgeInsets.only(bottom: isLast ? 0 : d.gap),
+          padding: EdgeInsets.only(bottom: isLast ? 0 : trailingGap),
           child: FocusTraversalGroup(
             policy: ReadingOrderTraversalPolicy(),
             child: content,

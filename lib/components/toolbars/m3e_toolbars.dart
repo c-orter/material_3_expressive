@@ -3,6 +3,7 @@ import 'package:motor/motor.dart';
 
 import '../../foundations/foundations.dart';
 import '../floating_action_buttons/enums/m3e_fab.dart';
+import '../floating_action_buttons/styles/m3e_fab_theme.dart';
 import '../icon_buttons/enums/m3e_icon_button_enums.dart';
 import '../icon_buttons/styles/m3e_icon_button_theme.dart';
 import 'components/m3e_toolbar_actions_row.dart';
@@ -38,6 +39,8 @@ export 'utils/m3e_toolbar_item_layout.dart';
 
 part 'components/m3e_toolbar_build.dart';
 part 'components/m3e_toolbar_exit_offset.dart';
+part 'components/m3e_toolbar_fab_wrap.dart';
+part 'components/m3e_toolbar_visibility_wrap.dart';
 
 /// A Material 3 Expressive toolbar.
 ///
@@ -97,6 +100,7 @@ class M3EToolbar extends StatefulWidget implements PreferredSizeWidget {
     this.fabExpandsToolbar = true,
     this.pillActiveSpring = true,
     this.labelMode = M3EToolbarLabelMode.activeOnly,
+    this.contentAlignment = M3EToolbarContentAlignment.even,
     super.key,
   }) : assert(
          screenOffset == null || screenOffset >= 0,
@@ -146,6 +150,7 @@ class M3EToolbar extends StatefulWidget implements PreferredSizeWidget {
     this.fabExpandsToolbar = true,
     this.pillActiveSpring = true,
     this.labelMode = M3EToolbarLabelMode.activeOnly,
+    this.contentAlignment = M3EToolbarContentAlignment.even,
     super.key,
   }) : assert(
          screenOffset == null || screenOffset >= 0,
@@ -186,6 +191,7 @@ class M3EToolbar extends StatefulWidget implements PreferredSizeWidget {
     this.activeIndex,
     this.onActiveIndexChanged,
     this.labelMode = M3EToolbarLabelMode.activeOnly,
+    this.contentAlignment = M3EToolbarContentAlignment.even,
     super.key,
   }) : placement = M3EToolbarPlacement.docked,
        axis = Axis.horizontal,
@@ -297,6 +303,11 @@ class M3EToolbar extends StatefulWidget implements PreferredSizeWidget {
   /// ignored. Floating toolbars only.
   final bool fabExpandsToolbar;
 
+  /// How docked actions use leftover width at 600dp and wider.
+  ///
+  /// Below that width the bar always spaces items evenly. Ignored when floating.
+  final M3EToolbarContentAlignment contentAlignment;
+
   /// When true (default), labeled action selection springs the toolbar pill
   /// width in sync with each action's label morph.
   ///
@@ -384,6 +395,11 @@ class _M3EToolbarState extends State<M3EToolbar> with TickerProviderStateMixin {
   double _fabSize = M3EToolbarTokens.fabBaseline;
   int? _activeIndex;
 
+  /// Docked bar's own measured extent along the exit axis, tracked so its
+  /// reserved layout space (e.g. Scaffold.bottomNavigationBar) can shrink in
+  /// sync with scroll-exit instead of leaving an empty slot behind.
+  double? _dockedExtent;
+
   bool get _floating => widget.placement == M3EToolbarPlacement.floating;
   bool get _hasFab =>
       _floating &&
@@ -395,7 +411,17 @@ class _M3EToolbarState extends State<M3EToolbar> with TickerProviderStateMixin {
     (M3EToolbarItem item) => item is M3EToolbarAction && item.isExpandTrigger,
   );
 
+  /// Scroll-collapse (collapse to the adjacent FAB / expand-trigger action
+  /// instead of sliding away). Requires one of those to exist — asserted in
+  /// [initState].
+  bool get _collapseOnScrollActive =>
+      widget.scrollBehavior?.action == M3EToolbarScrollAction.collapse;
+
   /// Neighbor-reveal expand (no FAB). FAB path uses whole-pill morph instead.
+  ///
+  /// Independent of scroll behavior: hide-on-scroll's slide-away and
+  /// collapse-on-scroll's collapse both compose with a manual tap
+  /// expand/collapse rather than disabling it.
   bool get _usesTriggerExpand => _floating && !_hasFab && _hasTrigger;
   bool get _usesFabExpand => _hasFab && widget.fabExpandsToolbar;
 
@@ -471,6 +497,13 @@ class _M3EToolbarState extends State<M3EToolbar> with TickerProviderStateMixin {
           1,
       'At most one M3EToolbarAction may set isExpandTrigger.',
     );
+    assert(
+      !_collapseOnScrollActive ||
+          (_floating && ((_hasFab && widget.fabExpandsToolbar) || _hasTrigger)),
+      'M3EToolbarScrollBehavior.collapseAlways requires a floating toolbar '
+      'with an adjacent FAB (fabExpandsToolbar true) or an '
+      'M3EToolbarAction.isExpandTrigger action.',
+    );
     _activeIndex = widget.activeIndex;
     _expanded = widget.expanded;
     final bool startExpanded =
@@ -482,6 +515,7 @@ class _M3EToolbarState extends State<M3EToolbar> with TickerProviderStateMixin {
     )..addListener(_handleExpandTick);
     _fabSize = _resolvedFabSize(_expandCtrl.value);
     _visibility?.attach(this);
+    _visibility?.addListener(_handleScrollCollapseRequest);
     _applyExitExtent();
   }
 
@@ -498,10 +532,41 @@ class _M3EToolbarState extends State<M3EToolbar> with TickerProviderStateMixin {
     if (oldWidget.visibilityController != widget.visibilityController ||
         oldWidget.scrollBehavior?.controller !=
             widget.scrollBehavior?.controller) {
+      final M3EToolbarVisibilityController? oldController =
+          oldWidget.visibilityController ??
+          oldWidget.scrollBehavior?.controller;
+      oldController?.removeListener(_handleScrollCollapseRequest);
       oldWidget.visibilityController?.detach();
       oldWidget.scrollBehavior?.controller.detach();
       _visibility?.attach(this);
+      _visibility?.addListener(_handleScrollCollapseRequest);
     }
+  }
+
+  /// Mirrors `M3EToolbarVisibilityController.collapseRequested` onto
+  /// [_expanded] for [M3EToolbarScrollAction.collapse] — edge-triggered, so
+  /// the collapse/expand starts instantly instead of waiting on a spring.
+  void _handleScrollCollapseRequest() {
+    final M3EToolbarVisibilityController? controller = _visibility;
+    if (controller == null) {
+      return;
+    }
+    if (!_collapseOnScrollActive) {
+      // Scroll-exit and collapse-on-scroll never run together. A collapse
+      // request here means the scroll wrapper was handed a different
+      // behavior (collapseAlways) than this toolbar (exitAlways) over the
+      // same controller.
+      assert(
+        !controller.collapseRequested,
+        'M3EToolbarScrollBehavior.exitAlways and '
+        'M3EToolbarScrollBehavior.collapseAlways do not run together. This '
+        'toolbar slides away on scroll, but its controller received a '
+        'collapse-on-scroll request. Give M3EToolbarScrollWrapper the same '
+        'M3EToolbarScrollBehavior as the toolbar.',
+      );
+      return;
+    }
+    _setExpanded(!controller.collapseRequested);
   }
 
   void _syncActiveIndex(M3EToolbar oldWidget) {
@@ -532,6 +597,7 @@ class _M3EToolbarState extends State<M3EToolbar> with TickerProviderStateMixin {
     _expandCtrl
       ..removeListener(_handleExpandTick)
       ..dispose();
+    _visibility?.removeListener(_handleScrollCollapseRequest);
     _visibility?.detach();
     super.dispose();
   }
@@ -603,9 +669,16 @@ class _M3EToolbarState extends State<M3EToolbar> with TickerProviderStateMixin {
   }
 
   /// Screen-edge clearance plus the dock-edge system inset, outside the pill.
+  ///
+  /// Horizontal floating bars use 16. Vertical bars use 24. An explicit
+  /// [M3EToolbar.screenOffset] replaces both. Safe area stays outside the pill.
   EdgeInsets _floatingOuterPadding(BuildContext context) {
+    final M3EToolbarTheme toolbarTheme = M3ETheme.of(context).toolbarTheme;
     final double offset =
-        widget.screenOffset ?? M3ETheme.of(context).toolbarTheme.screenOffset;
+        widget.screenOffset ??
+        (widget.axis == Axis.vertical
+            ? toolbarTheme.verticalScreenOffset
+            : toolbarTheme.screenOffset);
     final EdgeInsets safe = _edgeSafeAreaInset(context);
     return EdgeInsets.fromLTRB(
       offset,
@@ -627,102 +700,5 @@ class _M3EToolbarState extends State<M3EToolbar> with TickerProviderStateMixin {
         .width;
     final double iconPx = iconButtonTheme.iconSize(buttonSize);
     return (targetWidth - iconPx) / 2;
-  }
-
-  Widget _withFab(Widget toolbar, M3EToolbarColorStyle style) {
-    final Widget expandIcon =
-        widget.fabExpandIcon ?? widget.fabIcon ?? const Icon(M3EIcons.add);
-    final Widget collapseIcon =
-        widget.fabCollapseIcon ?? const Icon(M3EIcons.close);
-    final bool fabExpands = widget.fabExpandsToolbar;
-    final fabIcon = fabExpands && _expanded ? collapseIcon : expandIcon;
-    final VoidCallback? fabOnPressed = widget.floatingActionButton == null
-        ? (fabExpands ? _onFabPressed : widget.onFabPressed)
-        : widget.onFabPressed;
-    final Widget fab = M3EToolbarFabSlot(
-      fab: widget.floatingActionButton,
-      icon: fabIcon,
-      onPressed: fabOnPressed,
-      color: style == M3EToolbarColorStyle.vibrant
-          ? M3EFabColor.tertiary
-          : M3EFabColor.primary,
-      containerSize: fabExpands ? _fabSize : M3EToolbarTokens.fabBaseline,
-    );
-
-    final horizontal = widget.axis == Axis.horizontal;
-    final isRtl = Directionality.of(context) == TextDirection.rtl;
-
-    return AnimatedBuilder(
-      animation: _expandCtrl,
-      builder: (BuildContext context, Widget? child) {
-        if (horizontal) {
-          final M3EToolbarFabPosition pos =
-              widget.fabPosition == M3EToolbarFabPosition.start ||
-                  widget.fabPosition == M3EToolbarFabPosition.end
-              ? widget.fabPosition
-              : M3EToolbarFabPosition.end;
-          return M3EToolbarHorizontalFabLayout(
-            progress: _fabLayoutProgress,
-            fabPosition: pos,
-            isRtl: isRtl,
-            toolbar: toolbar,
-            fab: fab,
-          );
-        }
-        final M3EToolbarFabPosition pos =
-            widget.fabPosition == M3EToolbarFabPosition.top ||
-                widget.fabPosition == M3EToolbarFabPosition.bottom
-            ? widget.fabPosition
-            : M3EToolbarFabPosition.bottom;
-        return M3EToolbarVerticalFabLayout(
-          progress: _fabLayoutProgress,
-          fabPosition: pos,
-          toolbar: toolbar,
-          fab: fab,
-        );
-      },
-    );
-  }
-
-  Widget _wrapVisibility(Widget bar) {
-    final M3EToolbarVisibilityController? controller = _visibility;
-    if (controller == null && widget.scrollBehavior == null) {
-      return bar;
-    }
-    final M3EToolbarVisibilityController resolved =
-        controller ?? widget.scrollBehavior!.controller;
-
-    Widget measured = M3EToolbarMeasureSize(
-      onChange: (Size size) {
-        if (widget.exitExtent != null || resolved.exitExtent != null) {
-          final double extent = widget.exitExtent ?? resolved.exitExtent ?? 0;
-          resolved.offsetLimit = -extent.abs();
-          return;
-        }
-        final bool vertical =
-            _exitDirection == M3EToolbarExitDirection.top ||
-            _exitDirection == M3EToolbarExitDirection.bottom;
-        final double extent =
-            (vertical ? size.height : size.width) +
-            M3EToolbarTokens.screenOffset;
-        resolved.offsetLimit = -extent;
-      },
-      child: bar,
-    );
-
-    return ClipRect(
-      child: ListenableBuilder(
-        listenable: resolved,
-        builder: (BuildContext context, Widget? child) {
-          final Offset offset = _exitOffset(context, resolved.offset);
-          final bool hidden = resolved.collapsedFraction >= 1;
-          return Transform.translate(
-            offset: offset,
-            child: ExcludeFocus(excluding: hidden, child: child!),
-          );
-        },
-        child: measured,
-      ),
-    );
   }
 }

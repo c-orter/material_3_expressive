@@ -32,6 +32,7 @@ class M3EToolbarExpandingActions extends StatelessWidget {
     this.opticalInset = 0,
     this.pillActiveSpring = true,
     this.labelMode = M3EToolbarLabelMode.activeOnly,
+    this.colorStyle = M3EToolbarColorStyle.standard,
     super.key,
   });
 
@@ -86,6 +87,9 @@ class M3EToolbarExpandingActions extends StatelessWidget {
   /// labelMode.
   final M3EToolbarLabelMode labelMode;
 
+  /// colorStyle.
+  final M3EToolbarColorStyle colorStyle;
+
   static const double _iconRevealStart = 0.4;
 
   @override
@@ -122,6 +126,7 @@ class M3EToolbarExpandingActions extends StatelessWidget {
       action: trigger,
       size: iconButtonSize,
       onPressed: onTriggerPressed,
+      colorStyle: colorStyle,
       pillActiveSpring: pillActiveSpring,
       labelMode: labelMode,
     );
@@ -173,6 +178,7 @@ class M3EToolbarExpandingActions extends StatelessWidget {
           buildAction: (M3EToolbarAction action) => M3EToolbarIconButton(
             action: action,
             size: iconButtonSize,
+            colorStyle: colorStyle,
             pillActiveSpring: pillActiveSpring,
             labelMode: labelMode,
           ),
@@ -298,6 +304,7 @@ class M3EToolbarExpandingActions extends StatelessWidget {
           buildAction: (M3EToolbarAction action) => M3EToolbarIconButton(
             action: action,
             size: iconButtonSize,
+            colorStyle: colorStyle,
             pillActiveSpring: pillActiveSpring,
             labelMode: labelMode,
           ),

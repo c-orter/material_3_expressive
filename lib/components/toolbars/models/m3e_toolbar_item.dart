@@ -55,7 +55,7 @@ class M3EToolbarAction extends M3EToolbarItem {
   /// uses the accent's on-color.
   final Color? color;
 
-  /// When true, uses filled / trigger-like coloring.
+  /// When true, uses the tonal selected colors (not a filled emphasis).
   ///
   /// When [M3EToolbar.onActiveIndexChanged] is set, the toolbar owns selection
   /// and overwrites this. Otherwise the flag is respected as provided.

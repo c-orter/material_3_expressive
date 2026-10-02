@@ -85,24 +85,25 @@ void main() {
     expect(find.byIcon(M3EIcons.settings), findsOneWidget);
   });
 
-  testWidgets('active action label uses the button foreground (onPrimary)', (
-    tester,
-  ) async {
-    final Color onPrimary = M3EThemeData.light(
-      seedColor: const Color(0xFF6750A4),
-    ).colorScheme.onPrimary;
+  testWidgets(
+    'active action label uses the button foreground (onSecondaryContainer)',
+    (tester) async {
+      final Color onSecondaryContainer = M3EThemeData.light(
+        seedColor: const Color(0xFF6750A4),
+      ).colorScheme.onSecondaryContainer;
 
-    await tester.pumpWidget(
-      _host(
-        child: M3EToolbar(
-          labelMode: M3EToolbarLabelMode.selectedIcon,
-          actions: _labeledActions(),
+      await tester.pumpWidget(
+        _host(
+          child: M3EToolbar(
+            labelMode: M3EToolbarLabelMode.selectedIcon,
+            actions: _labeledActions(),
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    final Text activeLabel = tester.widget<Text>(find.text('One'));
-    expect(activeLabel.style?.color, onPrimary);
-  });
+      final Text activeLabel = tester.widget<Text>(find.text('One'));
+      expect(activeLabel.style?.color, onSecondaryContainer);
+    },
+  );
 }

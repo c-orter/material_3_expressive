@@ -38,8 +38,36 @@ class M3ETextFormField extends FormField<String> {
     this.onSubmitted,
     this.onTapOutside,
     this.maxLines = 1,
+    this.minLines,
     this.readOnly = false,
+    this.autofocus = false,
+    this.isRequired = false,
+    this.prefixText,
+    this.suffixText,
+    this.prefixSemanticsLabel,
+    this.suffixSemanticsLabel,
+    this.placeholder,
+    this.maxLength,
+    this.showCounter,
+    this.counterSemanticsLabelBuilder = m3eTextFieldCounterLabel,
+    this.supportingTextOnFocusOnly = false,
+    this.showErrorIcon = true,
+    this.showClearButton = false,
+    this.showPasswordToggle = false,
+    this.clearButtonSemanticsLabel = 'Clear',
+    this.showPasswordSemanticsLabel = 'Show password',
+    this.hidePasswordSemanticsLabel = 'Hide password',
+    this.errorIconSemanticsLabel = 'Error',
+    this.mouseCursor,
+    this.contextMenuBuilder = m3eDefaultTextFieldContextMenuBuilder,
+    this.textCapitalization = TextCapitalization.none,
+    this.textAlign = TextAlign.start,
+    this.density,
+    this.iconAlignment,
+    this.affixAlignment,
+    this.theme,
     this.onTap,
+    this.onEditingComplete,
     this.content,
     this.alwaysFloating,
     super.initialValue,
@@ -49,6 +77,14 @@ class M3ETextFormField extends FormField<String> {
   }) : assert(
          controller == null || initialValue == null,
          'controller and initialValue are mutually exclusive',
+       ),
+       assert(
+         !obscureText || maxLines == 1,
+         'Obscured text fields cannot be multi-line.',
+       ),
+       assert(
+         !showPasswordToggle || maxLines == 1,
+         'The password toggle needs a single-line field.',
        );
 
   /// label.
@@ -97,13 +133,97 @@ class M3ETextFormField extends FormField<String> {
   final TapRegionCallback? onTapOutside;
 
   /// maxLines.
-  final int maxLines;
+  final int? maxLines;
+
+  /// minLines.
+  final int? minLines;
 
   /// readOnly.
   final bool readOnly;
 
+  /// autofocus.
+  final bool autofocus;
+
+  /// isRequired.
+  final bool isRequired;
+
+  /// prefixText.
+  final String? prefixText;
+
+  /// suffixText.
+  final String? suffixText;
+
+  /// prefixSemanticsLabel.
+  final String? prefixSemanticsLabel;
+
+  /// suffixSemanticsLabel.
+  final String? suffixSemanticsLabel;
+
+  /// placeholder.
+  final String? placeholder;
+
+  /// maxLength.
+  final int? maxLength;
+
+  /// showCounter.
+  final bool? showCounter;
+
+  /// counterSemanticsLabelBuilder.
+  final M3ETextFieldCounterLabelBuilder counterSemanticsLabelBuilder;
+
+  /// supportingTextOnFocusOnly.
+  final bool supportingTextOnFocusOnly;
+
+  /// showErrorIcon.
+  final bool showErrorIcon;
+
+  /// showClearButton.
+  final bool showClearButton;
+
+  /// showPasswordToggle.
+  final bool showPasswordToggle;
+
+  /// clearButtonSemanticsLabel.
+  final String clearButtonSemanticsLabel;
+
+  /// showPasswordSemanticsLabel.
+  final String showPasswordSemanticsLabel;
+
+  /// hidePasswordSemanticsLabel.
+  final String hidePasswordSemanticsLabel;
+
+  /// errorIconSemanticsLabel.
+  final String errorIconSemanticsLabel;
+
+  /// mouseCursor.
+  final MouseCursor? mouseCursor;
+
+  /// contextMenuBuilder.
+  final EditableTextContextMenuBuilder? contextMenuBuilder;
+
+  /// textCapitalization.
+  final TextCapitalization textCapitalization;
+
+  /// textAlign.
+  final TextAlign textAlign;
+
+  /// density.
+  final int? density;
+
+  /// iconAlignment.
+  final M3ETextFieldSlotAlignment? iconAlignment;
+
+  /// affixAlignment.
+  final M3ETextFieldSlotAlignment? affixAlignment;
+
+  /// theme.
+  final M3ETextFieldTheme? theme;
+
   /// onTap.
   final VoidCallback? onTap;
+
+  /// onEditingComplete.
+  final VoidCallback? onEditingComplete;
 
   /// content.
   final Widget? content;
@@ -225,8 +345,36 @@ class M3ETextFormFieldState extends FormFieldState<String> {
       },
       onTapOutside: widget.onTapOutside,
       maxLines: widget.maxLines,
+      minLines: widget.minLines,
       readOnly: widget.readOnly,
+      autofocus: widget.autofocus,
+      isRequired: widget.isRequired,
+      prefixText: widget.prefixText,
+      suffixText: widget.suffixText,
+      prefixSemanticsLabel: widget.prefixSemanticsLabel,
+      suffixSemanticsLabel: widget.suffixSemanticsLabel,
+      placeholder: widget.placeholder,
+      maxLength: widget.maxLength,
+      showCounter: widget.showCounter,
+      counterSemanticsLabelBuilder: widget.counterSemanticsLabelBuilder,
+      supportingTextOnFocusOnly: widget.supportingTextOnFocusOnly,
+      showErrorIcon: widget.showErrorIcon,
+      showClearButton: widget.showClearButton,
+      showPasswordToggle: widget.showPasswordToggle,
+      clearButtonSemanticsLabel: widget.clearButtonSemanticsLabel,
+      showPasswordSemanticsLabel: widget.showPasswordSemanticsLabel,
+      hidePasswordSemanticsLabel: widget.hidePasswordSemanticsLabel,
+      errorIconSemanticsLabel: widget.errorIconSemanticsLabel,
+      mouseCursor: widget.mouseCursor,
+      contextMenuBuilder: widget.contextMenuBuilder,
+      textCapitalization: widget.textCapitalization,
+      textAlign: widget.textAlign,
+      density: widget.density,
+      iconAlignment: widget.iconAlignment,
+      affixAlignment: widget.affixAlignment,
+      theme: widget.theme,
       onTap: widget.onTap,
+      onEditingComplete: widget.onEditingComplete,
       content: widget.content,
       alwaysFloating: widget.alwaysFloating ?? false,
     );

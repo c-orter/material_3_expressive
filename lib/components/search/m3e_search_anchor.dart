@@ -3,10 +3,14 @@ import 'package:flutter/widgets.dart';
 
 import '../../foundations/foundations.dart';
 import '../icon_buttons/m3e_icon_buttons.dart';
+import 'components/m3e_search_anchor_scope.dart';
 import 'components/m3e_search_view.dart';
 import 'controllers/m3e_search_controller.dart';
+import 'enums/m3e_search_enums.dart';
 import 'm3e_search_bar.dart';
+import 'models/m3e_search_anchor_surface.dart';
 import 'res/m3e_search_constants.dart';
+import 'utils/m3e_search_spring.dart';
 
 /// Manages a search view route opened from a search bar or custom anchor.
 class M3ESearchAnchor extends StatefulWidget {
@@ -44,6 +48,10 @@ class M3ESearchAnchor extends StatefulWidget {
     this.enabled = true,
     this.smartDashesType,
     this.smartQuotesType,
+    this.viewStyle,
+    this.showViewClearButton = true,
+    this.suggestionsAnnouncementBuilder,
+    this.scrimColor,
   });
 
   /// Creates an anchor with a default [M3ESearchBar] child.
@@ -97,6 +105,12 @@ class M3ESearchAnchor extends StatefulWidget {
     SmartDashesType? smartDashesType,
     SmartQuotesType? smartQuotesType,
     AlignmentGeometry barAlignment = AlignmentDirectional.centerStart,
+    bool? wrapActions,
+    Widget? barAvatar,
+    M3ESearchViewStyle? viewStyle,
+    bool showViewClearButton = true,
+    M3ESearchAnnouncementBuilder? suggestionsAnnouncementBuilder,
+    Color? scrimColor,
   }) {
     return M3ESearchAnchor(
       key: key,
@@ -128,6 +142,10 @@ class M3ESearchAnchor extends StatefulWidget {
       enabled: enabled,
       smartDashesType: smartDashesType,
       smartQuotesType: smartQuotesType,
+      viewStyle: viewStyle,
+      showViewClearButton: showViewClearButton,
+      suggestionsAnnouncementBuilder: suggestionsAnnouncementBuilder,
+      scrimColor: scrimColor,
       suggestionsBuilder: suggestionsBuilder,
       builder: (BuildContext context, M3ESearchController controller) {
         return _M3ESearchAnchorBar(
@@ -135,8 +153,10 @@ class M3ESearchAnchor extends StatefulWidget {
           constraints: constraints,
           barLeading: barLeading,
           barTrailing: barTrailing,
+          barAvatar: barAvatar,
           barHintText: barHintText,
           barAlignment: barAlignment,
+          wrapActions: wrapActions,
           onTap: onTap,
           barElevation: barElevation,
           barBackgroundColor: barBackgroundColor,
@@ -160,8 +180,10 @@ class M3ESearchAnchor extends StatefulWidget {
     );
   }
 
-  /// isFullScreen.
-
+  /// Full-screen (true) or docked (false) layout.
+  ///
+  /// Null picks full-screen below the view theme compact breakpoint (600)
+  /// and docked at medium and expanded widths, swapping live on resize.
   final bool? isFullScreen;
 
   /// searchController.
@@ -254,6 +276,20 @@ class M3ESearchAnchor extends StatefulWidget {
   /// smartQuotesType.
   final SmartQuotesType? smartQuotesType;
 
+  /// Contained (default) or divided view style. Null uses the view theme.
+  final M3ESearchViewStyle? viewStyle;
+
+  /// Whether the view header shows a clear (X) action while it has text.
+  final bool showViewClearButton;
+
+  /// Screen reader text sent when suggestions or results change.
+  ///
+  /// Defaults to "N results available".
+  final M3ESearchAnnouncementBuilder? suggestionsAnnouncementBuilder;
+
+  /// Docked scrim color. Defaults to scrim at 0.32.
+  final Color? scrimColor;
+
   @override
   State<M3ESearchAnchor> createState() => _M3ESearchAnchorState();
 }
@@ -264,8 +300,10 @@ class _M3ESearchAnchorBar extends StatefulWidget {
     this.constraints,
     this.barLeading,
     this.barTrailing,
+    this.barAvatar,
     this.barHintText,
     this.barAlignment = AlignmentDirectional.centerStart,
+    this.wrapActions,
     this.onTap,
     this.barElevation,
     this.barBackgroundColor,
@@ -290,8 +328,10 @@ class _M3ESearchAnchorBar extends StatefulWidget {
   final BoxConstraints? constraints;
   final Widget? barLeading;
   final Iterable<Widget>? barTrailing;
+  final Widget? barAvatar;
   final String? barHintText;
   final AlignmentGeometry barAlignment;
+  final bool? wrapActions;
   final GestureTapCallback? onTap;
   final WidgetStateProperty<double?>? barElevation;
   final WidgetStateProperty<Color?>? barBackgroundColor;
@@ -398,8 +438,10 @@ class _M3ESearchAnchorBarState extends State<_M3ESearchAnchorBar> {
         shape: widget.barShape,
         padding: widget.barPadding,
         alignment: widget.barAlignment,
+        wrapActions: widget.wrapActions,
         leading: widget.barLeading ?? const Icon(M3EIcons.search),
         trailing: _buildTrailing(),
+        avatar: widget.barAvatar,
         textCapitalization: widget.textCapitalization,
         textInputAction: widget.textInputAction,
         keyboardType: widget.keyboardType,
@@ -414,8 +456,8 @@ class _M3ESearchAnchorBarState extends State<_M3ESearchAnchorBar> {
 
 class _M3ESearchAnchorState extends State<M3ESearchAnchor>
     implements M3ESearchAnchorHandle {
-  Size? _screenSize;
   bool _anchorIsVisible = true;
+  final M3ESearchAnchorSurface _surface = M3ESearchAnchorSurface();
   bool _suppressFocusOpen = false;
   final GlobalKey _anchorKey = GlobalKey();
   M3ESearchController? _internalSearchController;
@@ -435,20 +477,6 @@ class _M3ESearchAnchorState extends State<M3ESearchAnchor>
   void initState() {
     super.initState();
     _searchController.anchor = this;
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final Size updatedScreenSize = MediaQuery.sizeOf(context);
-    if (_screenSize != null &&
-        _screenSize != updatedScreenSize &&
-        _searchController.isAttached &&
-        viewIsOpen &&
-        !_showFullScreenView()) {
-      closeView(null);
-    }
-    _screenSize = updatedScreenSize;
   }
 
   @override
@@ -478,21 +506,6 @@ class _M3ESearchAnchorState extends State<M3ESearchAnchor>
     super.dispose();
   }
 
-  bool _showFullScreenView() {
-    if (widget.isFullScreen != null) {
-      return widget.isFullScreen!;
-    }
-    final TargetPlatform platform = M3ETheme.platformOf(context);
-    return switch (platform) {
-      TargetPlatform.iOS ||
-      TargetPlatform.android ||
-      TargetPlatform.fuchsia => true,
-      TargetPlatform.macOS ||
-      TargetPlatform.linux ||
-      TargetPlatform.windows => false,
-    };
-  }
-
   @override
   void openView() {
     if (viewIsOpen) {
@@ -504,9 +517,17 @@ class _M3ESearchAnchorState extends State<M3ESearchAnchor>
     final NavigatorState navigator = Navigator.of(context);
     _route = M3ESearchViewRoute(
       anchorKey: _anchorKey,
+      surface: _surface,
       searchController: _searchController,
       suggestionsBuilder: widget.suggestionsBuilder,
-      showFullScreenView: _showFullScreenView(),
+      isFullScreen: widget.isFullScreen,
+      transformDuration: m3eSearchSpringSettle(
+        M3ETheme.of(context).searchViewTheme.containerTransformSpring,
+      ),
+      viewStyle: widget.viewStyle,
+      showViewClearButton: widget.showViewClearButton,
+      announcementBuilder: widget.suggestionsAnnouncementBuilder,
+      scrimColor: widget.scrimColor,
       toggleVisibility: _toggleVisibility,
       viewBuilder: widget.viewBuilder,
       viewLeading: widget.viewLeading,
@@ -587,7 +608,10 @@ class _M3ESearchAnchorState extends State<M3ESearchAnchor>
           child: GestureDetector(
             onTap: openView,
             behavior: HitTestBehavior.translucent,
-            child: widget.builder(context, _searchController),
+            child: M3ESearchAnchorScope(
+              surface: _surface,
+              child: widget.builder(context, _searchController),
+            ),
           ),
         ),
       ),

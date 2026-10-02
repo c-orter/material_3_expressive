@@ -9,6 +9,20 @@ void main() {
   registerDismissibleFullDismissTests();
 }
 
+/// Moves in small steps like a real swipe, so the drag wins the gesture arena
+/// over the row's tap and still receives the full distance.
+Future<void> _swipeBy(
+  WidgetTester tester,
+  TestGesture gesture,
+  double dx,
+) async {
+  const steps = 5;
+  for (var i = 0; i < steps; i++) {
+    await gesture.moveBy(Offset(dx / steps, 0));
+    await tester.pump();
+  }
+}
+
 void registerDismissiblePreviewSnapTests() {
   testWidgets('dismissible action preview snaps open and closes on card tap', (
     WidgetTester tester,
@@ -18,23 +32,27 @@ void registerDismissiblePreviewSnapTests() {
       M3EMaterialApp(
         data: M3EThemeData.light(seedColor: const Color(0xFF6750A4)),
         home: Scaffold(
-          body: M3EDismissibleColumn(
+          body: M3EList(
             itemCount: 2,
-            onDismiss: (int index, DismissDirection direction) async => false,
-            trailingActionsBuilder: (int index) => <M3EListSwipeAction>[
-              M3EListSwipeAction(
-                icon: const Icon(M3EIcons.archive),
-                width: 56,
-                onPressed: () => archiveTaps++,
-              ),
-              const M3EListSwipeAction(
-                icon: Icon(M3EIcons.delete),
-                width: 56,
-                isPrimary: true,
-              ),
-            ],
             itemBuilder: (BuildContext context, int index) {
-              return M3EListItem(headline: 'Item $index');
+              return M3EListItem(
+                headline: 'Item $index',
+                swipe: M3EListItemSwipe(
+                  onDismiss: (DismissDirection direction) async => false,
+                  trailing: <M3EListSwipeAction>[
+                    M3EListSwipeAction(
+                      icon: const Icon(M3EIcons.archive),
+                      width: 56,
+                      onPressed: () => archiveTaps++,
+                    ),
+                    const M3EListSwipeAction(
+                      icon: Icon(M3EIcons.delete),
+                      width: 56,
+                      isPrimary: true,
+                    ),
+                  ],
+                ),
+              );
             },
           ),
         ),
@@ -45,7 +63,7 @@ void registerDismissiblePreviewSnapTests() {
     final Offset start = tester.getCenter(find.text('Item 0'));
     final TestGesture gesture = await tester.startGesture(start);
     // Drag left past 35% of actions width (~(56+56+8*3)=184 → 0.35≈64).
-    await gesture.moveBy(const Offset(-100, 0));
+    await _swipeBy(tester, gesture, -100);
     await tester.pump();
     await gesture.up();
     await tester.pumpAndSettle();
@@ -67,7 +85,7 @@ void registerDismissiblePreviewSnapTests() {
     final TestGesture open = await tester.startGesture(
       tester.getCenter(find.text('Item 0')),
     );
-    await open.moveBy(const Offset(-100, 0));
+    await _swipeBy(tester, open, -100);
     await tester.pump();
     await open.up();
     await tester.pumpAndSettle();
@@ -98,16 +116,20 @@ void _applyListReorder(
 }
 
 Widget _reorderBlockedColumn(List<String> items, StateSetter setState) {
-  return M3EDismissibleColumn(
+  return M3EList(
     reorder: true,
     onReorder: (int oldIndex, int newIndex) {
       _applyListReorder(items, setState, oldIndex, newIndex);
     },
     itemCount: items.length,
-    onDismiss: (int index, DismissDirection direction) async => false,
-    trailingActionsBuilder: _previewSwipeActions,
     itemBuilder: (BuildContext context, int index) {
-      return M3EListItem(headline: items[index]);
+      return M3EListItem(
+        headline: items[index],
+        swipe: M3EListItemSwipe(
+          onDismiss: (DismissDirection direction) async => false,
+          trailing: _previewSwipeActions(index),
+        ),
+      );
     },
   );
 }
@@ -129,7 +151,7 @@ Future<void> _openActionPreviewThenAttemptReorder(WidgetTester tester) async {
   final TestGesture open = await tester.startGesture(
     tester.getCenter(find.text('A')),
   );
-  await open.moveBy(const Offset(-100, 0));
+  await _swipeBy(tester, open, -100);
   await tester.pump();
   await open.up();
   await tester.pumpAndSettle();
@@ -169,17 +191,21 @@ void registerDismissibleFullDismissTests() {
         home: Scaffold(
           body: SizedBox(
             width: 400,
-            child: M3EDismissibleColumn(
+            child: M3EList(
               itemCount: 1,
-              onDismiss: (int index, DismissDirection direction) async {
-                dismissed = true;
-                return true;
-              },
-              style: const M3EDismissibleListStyle(
+              dismissStyle: const M3EDismissibleListStyle(
                 background: ColoredBox(color: Color(0xFF00FF00)),
               ),
               itemBuilder: (BuildContext context, int index) {
-                return const M3EListItem(headline: 'Only');
+                return M3EListItem(
+                  headline: 'Only',
+                  swipe: M3EListItemSwipe(
+                    onDismiss: (DismissDirection direction) async {
+                      dismissed = true;
+                      return true;
+                    },
+                  ),
+                );
               },
             ),
           ),
@@ -191,7 +217,7 @@ void registerDismissibleFullDismissTests() {
     final TestGesture gesture = await tester.startGesture(
       tester.getCenter(find.text('Only')),
     );
-    await gesture.moveBy(const Offset(120, 0));
+    await _swipeBy(tester, gesture, 120);
     await tester.pump();
     await gesture.up();
     await tester.pumpAndSettle();

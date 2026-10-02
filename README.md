@@ -35,8 +35,13 @@ An interactive gallery demonstrating **all 44 widgets** also lives in the
 [`example/`](example/) directory (same build as the live demo). It groups
 components the same way as the official Material 3 catalog, with a live
 playground per component under [`example/lib/pages/playground/`](example/lib/pages/playground/).
-Each playground includes a **Code** section with paste-ready Dart that tracks
-the current controls (copy to clipboard).
+Each tab lists its components (a card grid on wide windows). Opening one shows
+its preview screen: the component sits in its real place (app bars on top, nav
+bars at the bottom, FABs in the FAB slot), next to a controls pane on wide
+windows or behind a **Tap for controls** banner that opens a full-height
+bottom sheet on narrow ones. Only the controls that apply to the selected
+variant appear, and a **Code** tab shows paste-ready Dart that tracks them
+(copy to clipboard).
 
 | Tab | Playgrounds | Components |
 | --- | ----------- | ---------- |
@@ -84,7 +89,7 @@ flutter run
 
 ## Migrating to `material_ui`
 
-This package uses [`material_ui`](https://pub.dev/packages/material_ui) `^1.4.0`
+This package uses [`material_ui`](https://pub.dev/packages/material_ui) `^1.5.0`
 for Material widgets (`MaterialApp`, `ThemeData`, `ColorScheme`, and the rest of
 the Material library). **Do not import** `package:flutter/material.dart`.
 
@@ -101,48 +106,25 @@ imports to `package:material_ui/material_ui.dart`. Flutter **3.47.0 or newer**
 [`dynamic_color`](https://pub.dev/packages/dynamic_color) `^2.1.0` (re-exported
 through this package). Prefer those APIs rather than a local duplicate.
 
-## What's new in 1.1.3
+## What's new in 1.1.5
 
-Summary of updates since 1.1.2 (details in [`CHANGELOG.md`](CHANGELOG.md)):
+Summary of updates since 1.1.4 (details in [`CHANGELOG.md`](CHANGELOG.md)):
 
-- **Deps** — `material_ui` `^1.4.0`; Flutter `>=3.47.0` (Dart `^3.13.0`).
-- **Breaking — buttons** — spec size, color, and shape tokens. Selection is
-  `isSelected` / `selectedIcon` / `selectedLabel`. `M3EToggleButton` is removed.
-- **Breaking — button groups** — module is `button_group` (`buttonGroupTheme`).
-  Density is `regular` / `comfortable` / `compact` / `dense`. Tab moves focus;
-  arrows are not captured.
-- **Breaking — icon buttons** — spec radii, outlines, and color roles. Default
-  variant is **`filled`**.
-- **Breaking — FABs** — `medium` is **80dp**. `regular` is the old **56dp**
-  size. Filled color styles and `M3EFabController`.
-- **Breaking — extended FABs** — `M3EExtendedFabSize` (`small` default).
-  Label required. `M3EExtendedFabController`.
-- **Breaking — FAB menus** — **2–6** items, `M3EFabMenuController`, per-item
-  container transform. Tab walks items; Escape closes.
-- **Segmented buttons** — outlined spec tokens, density heights, focus ring.
-- **Split buttons** — spec size tokens; open state is a state layer, not a
-  recolor.
-- **Checkboxes, radios, switches, chips** — spec sizes, colors, focus rings,
-  and `InkSparkle`. Radio groups and chip groups add arrow-key focus.
-- **Dividers** — **1dp** outline-variant line. Outer margins stay off unless
-  `outerMargin` is set.
-- **Navigation** — bar, rail, and drawer pills scale in place. They no longer
-  travel between destinations.
-- **Menus** — vertical and baseline (`M3EMenuVariant`). Multi-select stays
-  open (`M3EMenuSelectionMode`).
-- **Toolbars** — floating `alignment` and `screenOffset` (default **16**).
-  Docked ignores both.
-- **Overlays** — back closes an open menu, dropdown, split popup, or FAB menu
-  before leaving the page.
-- **Snackbars and tooltips** — spec padding, timing, and controllers. Escape
-  dismisses a focused snackbar.
-- **Breaking — badges** — error colors, **6dp** dot, **16dp** large badge.
-  `label` preferred over `count`. `smallOffset` / `largeOffset` replace
-  `defaultOffset`.
-- **Progress** — secondary-container track, circular gap **4dp**, optional
-  `showTrack`.
-- **Breaking — loading indicator** — `elevation` removed. `size`,
-  `containerShape`, and `indicatorColors` added.
+- **Search** — spec pill bar, contained or divided view (full-screen below
+  **600**, docked above) and `M3ESliverSearchBar`.
+- **Text fields** — spec filled and outlined fields with prefix/suffix,
+  counter, clear and password buttons, density and multi-line alignment.
+- **Dialogs** — spec basic and full-screen dialogs, spring motion, focus trap,
+  `M3EDialogController` and `M3EDialog.showAdaptive`.
+- **Bottom sheets** — spec sheets with preset heights, `.standard`,
+  full-screen expansion, `M3EBottomSheetController` and `.showAdaptive`.
+- **Side sheets** — spec modal, standard and detached sheets,
+  `M3ESideSheetLayout` and `M3ESideSheetController`.
+- **Buttons** — `M3EButtonDecorationScope` and live state layers.
+- **Lists** — expanded-row fill, single Tab stop with arrow keys, and a
+  working `M3EList.sliver`.
+- **Breaking** — `M3ESideSheetTheme` and `M3ETextFieldTheme` were rebuilt
+  (see the changelog for migration).
 
 ## Installation
 
@@ -150,7 +132,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  material_3_expressive: ^1.1.3
+  material_3_expressive: ^1.1.5
 ```
 
 Then fetch it:
@@ -390,9 +372,12 @@ needed.
 
 #### M3EButton
 
-Text button aligned with the Material 3 Expressive spec: five sizes, press
-shape morph, and `InkSparkle`. Selection uses `isSelected`, `selectedIcon`,
-and `selectedLabel`.
+Text button in five sizes with a press shape morph and the sparkle ripple.
+Styles are elevated, filled, tonal, outlined and text. `isSelected` turns it
+into a toggle that morphs round to square, with optional `selectedIcon` and
+`selectedLabel` (not on text buttons). State layers are **0.08** hover and
+**0.1** focus and press. Gradients and per-state colors go on
+`M3EButtonDecoration`; customize defaults on `M3EButtonTheme`.
 
 ```dart
 M3EButton(
@@ -401,21 +386,12 @@ M3EButton(
   child: const Text('Elevated'),
 );
 
-M3EButton(
-  decoration: M3EButtonDecoration(
-    backgroundGradient: WidgetStateProperty.all(
-      const LinearGradient(colors: [Color(0xFF6750A4), Color(0xFF9A82DB)]),
-    ),
-    foregroundGradient: WidgetStateProperty.all(
-      const LinearGradient(colors: [Color(0xFFFFFFFF), Color(0xFFEADDFF)]),
-    ),
-    outlineGradient: WidgetStateProperty.all(
-      const LinearGradient(colors: [Color(0xFF6750A4), Color(0xFF9A82DB)]),
-    ),
-    side: WidgetStateProperty.all(const BorderSide(width: 1)),
-  ),
-  onPressed: () {},
-  child: const Text('Gradient'),
+// Toggle (in State)
+M3EButton.filled(
+  icon: const Icon(M3EIcons.favorite_border),
+  selectedIcon: const Icon(M3EIcons.favorite),
+  isSelected: isFavorite,
+  onPressed: () => setState(() => isFavorite = !isFavorite),
 );
 ```
 
@@ -423,17 +399,17 @@ Keyboard: Tab, then Space or Enter.
 
 #### M3EIconButton
 
-Icon-only button aligned with the Material 3 Expressive spec. Default variant
-is `filled`. Toggle with `isSelected` and `selectedIcon`.
+Icon-only button in filled (default), tonal, outlined and standard variants.
+Toggle it with `isSelected` and `selectedIcon`. Customize it on
+`M3EIconButtonTheme`.
 
 ```dart
 M3EIconButton(
   icon: const Icon(M3EIcons.edit),
-  variant: M3EIconButtonVariant.filled,
   onPressed: () {},
 );
 
-// in State
+// Toggle (in State)
 M3EIconButton(
   icon: const Icon(M3EIcons.add),
   selectedIcon: const Icon(M3EIcons.check),
@@ -446,39 +422,17 @@ Keyboard: Tab, then Space or Enter.
 
 #### M3EFab
 
-Floating action button aligned with the Material 3 Expressive spec. Sizes:
-`small` 40, `regular` 56, `medium` 80 (default), `large` 96. `M3EFabController`
-handles scroll, appear, and container transform.
-
-```dart
-final fabController = M3EFabController();
-
-M3EFabScrollVisibility(
-  controller: fabController,
-  child: Scaffold(
-    body: ListView(...),
-    floatingActionButton: M3EFab(
-      controller: fabController,
-      appear: true,
-      icon: const Icon(M3EIcons.add),
-      size: M3EFabSize.medium,
-      color: M3EFabColor.primaryFilled,
-      elevation: 3,
-      hoverElevation: 4,
-      openBuilder: (context) => const ComposePage(),
-      onPressed: () {},
-    ),
-  ),
-);
-```
+Floating action button in `small` **40**, `regular` **56**, `medium` **80**
+(default) and `large` **96**. `M3EFabController` with
+`M3EFabScrollVisibility` hides it on scroll, and `openBuilder` opens a
+full-screen container transform. Customize it on `M3EFabTheme`.
 
 ```dart
 M3EFab(
   icon: const Icon(M3EIcons.add),
   size: M3EFabSize.large,
   color: M3EFabColor.tertiary,
-  elevation: 3,
-  hoverElevation: 4,
+  openBuilder: (context) => const ComposePage(), // optional transform
   onPressed: () {},
 );
 ```
@@ -487,37 +441,16 @@ Keyboard: Tab, then Space or Enter.
 
 #### M3EExtendedFab
 
-Extended FAB aligned with the Material 3 Expressive spec. Label is required.
-Sizes are `small` 56 (default), `medium` 80, and `large` 96.
-`M3EExtendedFabController` handles scroll, appear, and container transform.
-
-```dart
-final fabController = M3EExtendedFabController();
-
-M3EExtendedFabScrollVisibility(
-  controller: fabController,
-  child: Scaffold(
-    body: ListView(...),
-    floatingActionButton: M3EExtendedFab(
-      controller: fabController,
-      appear: true,
-      label: 'Compose',
-      icon: const Icon(M3EIcons.edit),
-      size: M3EExtendedFabSize.small,
-      color: M3EFabColor.primary,
-      openBuilder: (context) => const ComposePage(),
-      onPressed: () {},
-    ),
-  ),
-);
-```
+FAB with a required label, in `small` **56** (default), `medium` **80** and
+`large` **96**. `M3EExtendedFabController` with
+`M3EExtendedFabScrollVisibility` hides it on scroll, and `openBuilder` opens a
+container transform. Customize it on `M3EExtendedFabTheme`.
 
 ```dart
 M3EExtendedFab(
   label: 'Compose',
   icon: const Icon(M3EIcons.edit),
   size: M3EExtendedFabSize.medium,
-  color: M3EFabColor.primaryFilled,
   onPressed: () {},
 );
 ```
@@ -526,86 +459,40 @@ Keyboard: Tab, then Space or Enter.
 
 #### M3EFabMenu
 
-Speed-dial menu of 2–6 items, aligned with the Material 3 Expressive spec.
-The trigger becomes a 56dp close button. Back closes the menu before the route.
+Speed-dial menu of **2–6** items. The trigger morphs into a **56** close
+button, and back closes the menu before the route. Customize it on
+`M3EFabMenuTheme`.
 
 ```dart
-final menuController = M3EFabMenuController();
-
 M3EFabMenu(
-  controller: menuController,
-  position: M3EFabMenuPosition.right,
-  size: M3EFabSize.medium,
-  color: M3EFabColor.primary,
   expandIcon: const Icon(M3EIcons.add),
   collapseIcon: const Icon(M3EIcons.close),
   items: [
-    M3EFabMenuItem(
-      icon: const Icon(M3EIcons.edit),
-      label: 'Note',
-      onPressed: () {},
-      openBuilder: (context) => const NotePage(),
-    ),
-    M3EFabMenuItem(
-      icon: const Icon(M3EIcons.schedule),
-      label: 'Reminder',
-      onPressed: () {},
-    ),
+    M3EFabMenuItem(icon: const Icon(M3EIcons.edit), label: 'Note', onPressed: () {}),
+    M3EFabMenuItem(icon: const Icon(M3EIcons.schedule), label: 'Reminder', onPressed: () {}),
   ],
 );
 ```
 
-Keyboard: Tab walks items. Escape closes.
+Keyboard: Tab walks the items. Escape closes.
 
 #### M3EButtonGroup
 
-Connected or standard groups aligned with the Material 3 Expressive spec.
-Actions are `M3EButton`. Density changes height, not the gap.
-
-```dart
-// in State — single-select
-M3EButtonGroup(
-  selectedIndex: groupIndex,
-  onSelectedIndexChanged: (i) => setState(() => groupIndex = i),
-  selectionRequired: true,
-  actions: const [
-    M3EButtonGroupAction(icon: Icon(M3EIcons.arrow_back), minWidth: 40),
-    M3EButtonGroupAction(icon: Icon(M3EIcons.add), minWidth: 40),
-    M3EButtonGroupAction(icon: Icon(M3EIcons.arrow_forward), minWidth: 40),
-  ],
-);
-
-// multi-select
-M3EButtonGroup(
-  multiSelect: true,
-  selectedIndices: selected,
-  onSelectedIndicesChanged: (s) => setState(() => selected = s),
-  type: M3EButtonGroupType.connected,
-  actions: const [
-    M3EButtonGroupAction(label: Text('Mon')),
-    M3EButtonGroupAction(label: Text('Tue')),
-    M3EButtonGroupAction(label: Text('Wed')),
-  ],
-);
-```
-
-Keyboard: Tab, then Space or Enter. Arrows are not captured.
-
-#### Button selection
-
-Set `M3EButton.isSelected` to enable caller-controlled selection with
-round-to-square (or square-to-round) shape morphing. `selectedIcon` and
-`selectedLabel` replace their unselected counterparts. Selection is not
-available for `M3EButtonStyle.text`. `M3EButtonGroup` accepts a group-level
-`M3EButtonDecoration` and per-action `M3EButtonGroupAction.decoration`.
+Standard or connected group of `M3EButton` actions with single or multi
+selection. Density changes the height, not the gap. Customize it on
+`M3EButtonGroupTheme`.
 
 ```dart
 // in State
-M3EButton.filled(
-  icon: const Icon(M3EIcons.favorite_border),
-  selectedIcon: const Icon(M3EIcons.favorite),
-  isSelected: isFavorite,
-  onPressed: () => setState(() => isFavorite = !isFavorite),
+M3EButtonGroup(
+  type: M3EButtonGroupType.connected,
+  selectedIndex: groupIndex,
+  onSelectedIndexChanged: (i) => setState(() => groupIndex = i),
+  actions: const [
+    M3EButtonGroupAction(label: Text('Day')),
+    M3EButtonGroupAction(label: Text('Week')),
+    M3EButtonGroupAction(label: Text('Month')),
+  ],
 );
 ```
 
@@ -613,12 +500,12 @@ Keyboard: Tab, then Space or Enter.
 
 #### M3ESegmentedButton
 
-Outlined single- or multi-select control, aligned with the Material 3
-Expressive spec. Two to five segments. Density lowers the height; the target
-stays at least 48.
+Outlined single or multi-select control with **2–5** segments, **40** tall
+with a **48** target, and a **1** **outline** border. Density lowers the
+height. Customize it on `M3ESegmentedButtonTheme`.
 
 ```dart
-// in State — single select
+// in State
 M3ESegmentedButton<String>(
   segments: const [
     M3ESegment(value: 'list', label: 'List'),
@@ -627,26 +514,15 @@ M3ESegmentedButton<String>(
   selected: viewMode,
   onSelectionChanged: (v) => setState(() => viewMode = v),
 );
-
-// multi select
-M3ESegmentedButton<String>(
-  multiSelect: true,
-  density: M3ESegmentedButtonDensity.comfortable,
-  segments: const [
-    M3ESegment(value: 'new', label: 'New'),
-    M3ESegment(value: 'sale', label: 'Sale'),
-  ],
-  selected: filters,
-  onSelectionChanged: (v) => setState(() => filters = v),
-);
 ```
 
 Keyboard: Tab, then Space or Enter.
 
 #### M3ESplitButton
 
-Primary action plus a menu, aligned with the Material 3 Expressive spec.
-The gap between the two segments is 2. Back closes the popup before the route.
+A primary action and a menu trigger, **2** apart. The menu comes from `items`
+or `m3eMenuBuilder`, and back closes it before the route. Customize it on
+`M3ESplitButtonTheme`.
 
 ```dart
 M3ESplitButton<String>(
@@ -657,17 +533,6 @@ M3ESplitButton<String>(
   items: const [
     M3ESplitButtonItem(value: 'draft', child: Text('Save as draft')),
     M3ESplitButtonItem(value: 'copy', child: Text('Save a copy')),
-  ],
-);
-
-M3ESplitButton<String>(
-  label: 'Share',
-  items: null,
-  onSelected: (value) {},
-  m3eMenuBuilder: (context) => [
-    M3EMenuSelectable(label: 'Copy link', value: 'link'),
-    const M3EMenuDivider(),
-    M3EMenuSelectable(label: 'Email', value: 'email'),
   ],
 );
 ```
@@ -682,22 +547,16 @@ Keyboard: Tab, then Space or Enter. Escape closes the menu.
 
 #### M3ECheckbox
 
-Checkbox aligned with the Material 3 Expressive spec: 18dp box, 2dp corners,
-40dp state layer, 48dp target. Optional label. `checkIconPadding` defaults to
-none.
+Checkbox with an **18** box, **2** corners, a **40** state layer and a **48**
+target, with optional `tristate` and `label`. Customize it on
+`M3ECheckboxTheme`.
 
 ```dart
 // in State
 M3ECheckbox(
   value: checked,
-  onChanged: (v) => setState(() => checked = v),
-);
-
-M3ECheckbox(
-  value: tristateValue,
-  tristate: true,
   label: const Text('Remember me'),
-  onChanged: (v) => setState(() => tristateValue = v),
+  onChanged: (v) => setState(() => checked = v),
 );
 ```
 
@@ -705,8 +564,9 @@ Keyboard: Tab, then Space or Enter.
 
 #### M3ERadio
 
-Radio aligned with the Material 3 Expressive spec: 20dp icon, 40dp state
-layer, 48dp target. Put options in `M3ERadioGroup` for arrow-key selection.
+Radio with a **20** icon, a **40** state layer and a **48** target. Wrap
+options in `M3ERadioGroup` for arrow-key selection. Customize it on
+`M3ERadioTheme`.
 
 ```dart
 // in State
@@ -723,12 +583,13 @@ M3ERadioGroup<String>(
 );
 ```
 
-Keyboard: Tab or Shift+Tab enters the selected radio. Arrows move, select, and wrap.
+Keyboard: Tab enters the selected radio. Arrows move, select and wrap.
 
 #### M3ESwitch
 
-Switch aligned with the Material 3 Expressive spec. Track is 52×32. The handle
-is 16 off, 24 on or with an icon, and 28 pressed. Drag past the midpoint toggles.
+Switch with a **52×32** track. The handle is **16** off, **24** on or with an
+icon, and **28** pressed. Dragging past the midpoint toggles it. Customize it
+on `M3ESwitchTheme`.
 
 ```dart
 // in State
@@ -737,20 +598,15 @@ M3ESwitch(
   selectedIcon: const Icon(M3EIcons.check),
   onChanged: (v) => setState(() => wifiEnabled = v),
 );
-
-M3ESwitch(
-  value: bluetoothEnabled,
-  stateLayerSize: 56,
-  onChanged: (v) => setState(() => bluetoothEnabled = v),
-);
 ```
 
 Keyboard: Tab, then Space or Enter.
 
 #### M3EChip
 
-Chips aligned with the Material 3 Expressive spec: height 32, radius 8.
-`M3EChipGroup` moves focus with the arrow keys.
+Assist, filter, input and suggestion chips, **32** tall with **8** corners.
+`M3EChipGroup` moves focus between chips with the arrow keys. Customize them
+on `M3EChipTheme`.
 
 ```dart
 M3EChip(
@@ -759,39 +615,25 @@ M3EChip(
   onPressed: () {},
 );
 
-// in State — filter chip
+// Filter chip (in State)
 M3EChip(
   label: 'Flutter',
   type: M3EChipType.filter,
   selected: chips.contains('flutter'),
   onPressed: () => toggleChip('flutter'),
 );
-
-M3EChipGroup(
-  child: Wrap(
-    spacing: 8,
-    children: [
-      M3EChip(
-        label: 'Dart',
-        type: M3EChipType.input,
-        avatar: const Icon(M3EIcons.person),
-        onPressed: () {},
-        onDeleted: () {},
-      ),
-    ],
-  ),
-);
 ```
 
-Keyboard: arrows move focus. Backspace or Delete removes a focused input chip.
+Keyboard: Tab, then Space or Enter. In a group, arrows move. Backspace or
+Delete removes an input chip.
 
 #### M3EDropdownMenu
 
-Dropdown for one value, many values, search, or async items. Back closes the
-panel before the route.
+Dropdown for one or many values, with optional search, a selection `limit`
+and async items (`.future`). Back closes the panel before the route. Customize
+it on `M3EDropdownMenuTheme`.
 
 ```dart
-// Single select
 M3EDropdownMenu<String>(
   singleSelect: true,
   items: const [
@@ -801,104 +643,29 @@ M3EDropdownMenu<String>(
   fieldStyle: const M3EDropdownFieldStyle(hintText: 'Choose a framework'),
   onSelectionChanged: (items) {},
 );
-
-// Multi select with search (and optional selection cap)
-M3EDropdownMenu<String>(
-  searchEnabled: true,
-  limit: 2,
-  items: const [
-    M3EDropdownItem(label: 'Layout', value: 'layout'),
-    M3EDropdownItem(label: 'Theming', value: 'theming'),
-  ],
-  fieldStyle: const M3EDropdownFieldStyle(hintText: 'Select skills'),
-  onSelectionChanged: (items) {},
-);
-
-// Async items
-M3EDropdownMenu<String>.future(
-  singleSelect: true,
-  future: () async => [
-    const M3EDropdownItem(label: 'Ghana', value: 'gh'),
-    const M3EDropdownItem(label: 'Kenya', value: 'ke'),
-  ],
-  fieldStyle: const M3EDropdownFieldStyle(hintText: 'Load countries'),
-  onSelectionChanged: (items) {},
-);
 ```
 
-Keyboard: Enter or Space opens. Escape closes. Arrows move inside the panel.
+Keyboard: Space or Enter opens. Arrows move in the panel. Escape closes.
 
 #### M3ESlider
 
-Slider for a value or a range, including centered, wavy, and vertical.
-Stops use `divisions`.
+Value or range slider, also centered, wavy and vertical. Sizes `xs`–`xl` scale
+the track (**16–96**) and handle (**44–108**) together. The active track and
+handle are **primary**, the inactive track **secondary container**, and
+`divisions` adds stops. Customize it on `M3ESliderTheme`.
 
 ```dart
 // in State
 M3ESlider(
   value: volume,
-  onChanged: (v) => setState(() => volume = v),
-);
-
-M3ESlider(
-  value: brightness,
-  max: 5,
+  size: M3ESliderSize.l,
   divisions: 5,
-  onChanged: (v) => setState(() => brightness = v),
-);
-
-// Wavy active value (inactive track stays flat)
-M3ESlider.wavy(
-  value: progress,
-  onChanged: (v) => setState(() => progress = v),
-);
-
-M3ESlider.centered(
-  value: balance,
-  min: -100,
-  max: 100,
-  onChanged: (v) => setState(() => balance = v),
-);
-
-// Custom track / thumb / end dots (size & edge padding)
-M3ESlider(
-  value: level,
-  max: 4,
-  divisions: 4,
-  trackThickness: 30,
-  cornerRadius: 8,
-  thumbLength: 50,
-  dotSize: 12,
-  dotSpacing: 10,
-  onChanged: (v) => setState(() => level = v),
-  dotBuilder: ({
-    required context,
-    required color,
-    required size,
-    required active,
-  }) {
-    // e.g. paint M3EMaterialNewShapes.cookie4Sided / softBurst
-    return ColoredBox(color: color);
-  },
+  onChanged: (v) => setState(() => volume = v),
 );
 
 M3ERangeSlider(
   values: range,
   onChanged: (v) => setState(() => range = v),
-);
-
-M3ERangeSlider.wavy(
-  values: range,
-  onChanged: (v) => setState(() => range = v),
-);
-
-SizedBox(
-  height: 160,
-  width: 48,
-  child: M3ESlider.vertical(
-    value: level,
-    onChanged: (v) => setState(() => level = v),
-  ),
 );
 ```
 
@@ -906,11 +673,12 @@ Keyboard: arrows step. Page Up and Page Down jump. Home and End go to the ends.
 
 #### M3EDatePicker
 
-Dialog and inline calendar for one date or a range. Month paging uses the
-arrow keys.
+Inline calendar (`M3ECalendarDatePicker`) and dialogs for one date or a range,
+with a year grid and text input. The inline calendar is **328** wide.
+Customize it on `M3EDatePickerTheme`.
 
 ```dart
-// Inline calendar
+// Inline (in State)
 M3ECalendarDatePicker(
   initialDate: date,
   firstDate: DateTime(2020),
@@ -918,43 +686,33 @@ M3ECalendarDatePicker(
   onDateChanged: (v) => setState(() => date = v),
 );
 
-// Dialog
+// Dialog; use showRange for a range
 final picked = await M3EDatePicker.show(
   context,
   initialDate: date,
   firstDate: DateTime(2020),
   lastDate: DateTime(2030),
 );
-
-// Range dialog
-final range = await M3EDatePicker.showRange(
-  context,
-  firstDate: DateTime(2020),
-  lastDate: DateTime(2030),
-);
 ```
 
-Keyboard: arrows change month. Enter moves focus.
+Keyboard: Tab, then Space or Enter. Left and Right change the month.
 
 #### M3ETimePicker
 
-Dialog and dial for a time of day.
+Dialog and inline dial (**256**) for a time of day. Customize it on
+`M3ETimePickerTheme`.
 
 ```dart
-// Dialog
-final M3ETime? picked = await M3ETimePicker.show(
-  context,
-  initialTime: time,
-);
+final M3ETime? picked = await M3ETimePicker.show(context, initialTime: time);
 
-// Inline dial
+// Inline (in State)
 M3EDialTimePicker(
   value: time,
   onChanged: (v) => setState(() => time = v),
 );
 ```
 
-Keyboard: Enter moves focus.
+Keyboard: Tab, then Enter moves focus on.
 
 ---
 
@@ -964,45 +722,55 @@ Keyboard: Enter moves focus.
 
 #### M3ECard
 
-Elevated, filled, and outlined surface for content and actions.
+Elevated, filled and outlined card with **16** content padding and a
+**secondary** **3** focus ring. It has optional media, headline, supporting
+text, actions and overflow slots, a swipe action, and an `openBuilder`
+container transform. `M3ECardGroup` lays out and reorders a set of cards.
+Customize it on `M3ECardTheme`.
 
 ```dart
-M3ECard(child: const Text('Elevated'));
-
-M3ECard(
-  variant: M3ECardVariant.filled,
-  child: const Text('Filled'),
-);
-
 M3ECard(
   variant: M3ECardVariant.outlined,
+  media: Image.network(imageUrl, fit: BoxFit.cover),
+  headline: const Text('Weekend trip'),
+  supportingText: const Text('12 photos · 3 people'),
+  actions: M3EButton.text(onPressed: () {}, child: const Text('Share')),
   onPressed: () {},
-  child: const Text('Outlined (tap)'),
 );
 ```
 
+Keyboard: Tab, then Space or Enter. Left and Right reveal a swipe action, and
+Escape hides it.
+
 #### M3ECarousel
 
-Hero, contained, and uncontained layouts — horizontal by default, or vertical
-via `axis`. Use `onChange` for leading/focal index updates (e.g. hide labels on
-smaller items).
+Multi-browse, uncontained, multi-aspect, hero and full-screen carousels,
+horizontal or vertical (`axis`). Items are `M3ECarouselItem`, `onChange`
+reports the focal item, and `M3ECarouselController` steps, jumps or opens the
+show-all list. Customize it on `M3ECarouselTheme`.
 
 ```dart
 M3ECarousel(
   type: M3ECarouselType.hero,
-  heroAlignment: M3ECarouselHeroAlignment.center,
-  onTap: (index) {},
-  onChange: (details) {
-    // details.focalIndex / details.leadingIndex / details.isFocal(i)
-  },
-  children: List.generate(10, (i) => ColoredBox(color: Colors.blue)),
+  children: [
+    for (final url in imageUrls)
+      M3ECarouselItem(
+        image: Image.network(url, fit: BoxFit.cover),
+        title: const Text('Title'),
+        onTap: () {},
+      ),
+  ],
 );
 ```
 
+Keyboard: Tab or arrows move between items. Space or Enter opens one.
+
 #### M3EListItem
 
-Standard list row with headline, supporting text, and slots. Optional
-`variant` / `border` control the standalone card outline.
+List row with a headline, supporting text, and leading and trailing slots.
+Rows are **56**, **72** and **88** tall for one, two and three lines, with
+**16** side padding. `variant` and `border` style a standalone row. Customize
+it on `M3EListItemTheme`.
 
 ```dart
 M3EListItem(
@@ -1010,223 +778,82 @@ M3EListItem(
   supportingText: 'On · Fast charge enabled',
   leading: const Icon(M3EIcons.schedule),
   trailing: const Icon(M3EIcons.chevron_right),
-  variant: M3ECardVariant.outlined,
   onTap: () {},
 );
 ```
 
-#### M3ECardList
+Keyboard: Tab, then Space or Enter.
 
-A column of cards whose outer corners are larger than the inner ones.
-Turn on `selection` or `reorder`, or nest one with `embedded: true`.
+#### M3EList
+
+The list widget, with segmented (default) or standard corners. Rows opt into
+swipe actions, expansion, sub-lists (a nested `M3EList`) and container
+transforms, and the list adds selection and drag-to-reorder. Expanded rows
+fill **surface container high**. Use `.scrollable` for a lazy list and
+`.sliver` in a `CustomScrollView`. Customize it on `M3EListTheme`.
 
 ```dart
-M3ECardList(
+M3EList(
   variant: M3ECardVariant.outlined,
   itemCount: 3,
   onTap: (index) {},
   itemBuilder: (context, index) => M3EListItem(
-    headline: 'Inbox',
+    headline: 'Inbox $index',
     leading: const Icon(M3EIcons.schedule),
-  ),
-);
-
-// Selection + reorder (theme: M3EListTheme.selection / .reorder)
-M3ECardList(
-  selection: true,
-  reorder: true,
-  onReorder: (oldIndex, newIndex) {},
-  selectionState: const M3EListSelectionState(
-    mode: M3EListSelectionMode.multiple,
-    trigger: M3EListSelectionTrigger.icon,
-    selectedIcon: Icon(M3EIcons.check),
-  ),
-  itemCount: items.length,
-  itemBuilder: (context, index) => M3EListItem(headline: items[index]),
-);
-
-// Scrollable / lazy
-M3ECardList.builder(
-  itemCount: 20,
-  shrinkWrap: true,
-  itemBuilder: (context, index) => M3EListItem(
-    headline: 'Item $index',
   ),
 );
 ```
 
+Keyboard: the list is one Tab stop. Arrows move through rows, row actions and
+sub-rows. Space or Enter activates.
+
 #### M3ESelection
 
-Multi-select host with an optional app bar and any list as the body. Back
-clears the selection before leaving the page.
+Multi-select host: an `M3ESelectionAppBar` swaps its `idle` bar for a
+contextual bar with a count, select-all and `actions` while rows are selected,
+over any list body. Selected rows use `selectedColor`. Customize it on
+`M3ESelectionTheme`.
 
 ```dart
 final selection = M3ESelectionController();
 
-PopScope(
-  canPop: !selection.isSelectionMode,
-  onPopInvokedWithResult: (didPop, _) {
-    if (!didPop) selection.clear();
-  },
-  child: M3ESelection(
-    controller: selection,
+M3ESelection(
+  controller: selection,
+  itemCount: items.length,
+  appBar: M3ESelectionAppBar(
+    idle: M3EAppBar.top(titleText: 'Files'),
+    actions: [
+      M3EIconButton(icon: const Icon(M3EIcons.delete), onPressed: () {}),
+    ],
+  ),
+  body: M3EList.scrollable(
     itemCount: items.length,
-    selectedColor: const Color(0xFFC8E6C9),
-    appBar: M3ESelectionAppBar(
-      idle: M3EAppBar.search(
-        searchController: searchController,
-        suggestionsBuilder: (_, __) => const [],
-        barHintText: 'Search items',
-      ),
-      actions: [
-        M3EIconButton(icon: Icon(M3EIcons.archive), onPressed: () {}),
-        M3EIconButton(icon: Icon(M3EIcons.delete), onPressed: () {}),
-      ],
-    ),
-    body: M3ECardList.builder(
-      itemCount: items.length,
-      listPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      selection: true,
-      selectionController: selection,
-      selectionState: const M3EListSelectionState(
-        selectedIcon: Icon(M3EIcons.check),
-      ),
-      itemBuilder: (context, i) => M3EListItem(headline: items[i]),
-    ),
+    selection: true,
+    selectionController: selection,
+    itemBuilder: (context, i) => M3EListItem(headline: items[i]),
   ),
 );
 ```
 
-Advanced: wire `M3ESelectionAppBar` + a shared controller yourself (omit
-`M3ESelection`), or pass `M3EDismissibleList` as `body` for swipe + select.
-An explicit `colorBuilder` still wins over the selection highlight.
-
-#### M3EDismissibleColumn
-
-Vertically swipeable card list with expressive physics. Supports list-owned
-`selection` and `reorder` (same tokens as card list). Optional
-`leadingActionsBuilder` / `trailingActionsBuilder` reveal icon actions
-(`M3EListSwipeAction`) with preview snap; a side with no actions still
-full-dismisses.
-
-```dart
-M3EDismissibleColumn(
-  itemCount: 3,
-  selection: true,
-  reorder: true,
-  onReorder: (oldIndex, newIndex) {},
-  onDismiss: (index, direction) async => true,
-  trailingActionsBuilder: (index) => [
-    M3EListSwipeAction(
-      icon: const Icon(M3EIcons.archive),
-      onPressed: () {},
-    ),
-    const M3EListSwipeAction(
-      icon: Icon(M3EIcons.delete),
-      isPrimary: true,
-    ),
-  ],
-  onTap: (index) {},
-  itemBuilder: (context, index) => M3EListItem(
-    headline: 'Swipe to dismiss',
-    leading: const Icon(M3EIcons.schedule),
-  ),
-);
-```
-
-#### M3EDismissibleList
-
-Horizontal swipeable card list — same API as `M3EDismissibleColumn`.
-
-```dart
-SizedBox(
-  height: 120,
-  child: M3EDismissibleList(
-    itemCount: 5,
-    onDismiss: (index, direction) async => true,
-    itemBuilder: (context, index) => M3EListItem(
-      headline: 'Card $index',
-    ),
-  ),
-);
-```
-
-#### M3EExpandableList
-
-Expandable cards with expressive open/close motion. Use
-`M3EExpandableExpanded.list` for a nested list (e.g. `M3ECardList` with
-`embedded: true`) or `.content` for freeform body content. Header rows support
-list-owned `selection` / `reorder` (nested lists keep their own APIs; expanded
-rows snap-collapse for reorder). Optional `expandMotion` / `collapseMotion`
-override theme springs.
-
-```dart
-M3EExpandableList(
-  selection: true,
-  reorder: true,
-  onReorder: (oldIndex, newIndex) {},
-  data: [
-    M3EExpandableData(
-      title: 'Battery level low',
-      subtitle: 'Plug in your device.',
-      leading: const Icon(M3EIcons.battery_alert),
-      expanded: M3EExpandableExpanded.content(
-        const Text('Your battery is at 10%.'),
-      ),
-    ),
-    M3EExpandableData(
-      title: 'Nested list',
-      expanded: M3EExpandableExpanded.list(
-        M3ECardList(
-          embedded: true,
-          itemCount: 3,
-          itemBuilder: (context, i) => M3EListItem(headline: 'Child $i'),
-        ),
-      ),
-    ),
-  ],
-);
-
-// Scrollable variant for long lists
-M3EExpandableList.scrollable(
-  data: expandableItems,
-  shrinkWrap: true,
-);
-
-// Sliver variant for CustomScrollView
-CustomScrollView(
-  slivers: [
-    M3EExpandableList.sliver(data: expandableItems),
-  ],
-);
-```
+Keyboard: Tab, then Space or Enter selects a row.
 
 #### M3EDivider
 
-Divider aligned with the Material 3 Expressive spec: a 1dp outline-variant
-line. Full width unless `inset` or `outerMargin` is set.
+**1** **outline variant** line, full width unless `inset` or `outerMargin` is
+set, horizontal or vertical. Customize it on `M3EDividerTheme`.
 
 ```dart
 const M3EDivider();
 
-const M3EDivider(inset: M3EDividerInset.inset);
-
-Row(
-  children: [
-    const Text('Left'),
-    const SizedBox(width: 12),
-    const M3EDivider(axis: M3EDividerAxis.vertical),
-    const SizedBox(width: 12),
-    const Text('Right'),
-  ],
-);
+const M3EDivider(axis: M3EDividerAxis.vertical);
 ```
 
 #### M3EDialog
 
-Modal dialog — use the static `.show` helper. Optional `topDivider` /
-`bottomDivider` draw full-bleed lines between header, content, and actions
-(padding lives on those sections so dividers can reach the edges).
+Basic and full-screen dialogs. A basic dialog is **280–560** wide on
+**surface container high**, with **28** corners and **24** padding, over a
+**0.32** scrim. The headline and actions stay pinned while content scrolls.
+`showAdaptive` is full-screen below **600**. Customize it on `M3EDialogTheme`.
 
 ```dart
 M3EDialog.show<void>(
@@ -1234,69 +861,79 @@ M3EDialog.show<void>(
   dialog: M3EDialog(
     title: 'Reset settings?',
     content: const Text('This restores default values.'),
-    topDivider: true,
-    bottomDivider: true,
     actions: [
-      M3EButton(
-        style: M3EButtonStyle.text,
-        onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Cancel'),
-      ),
-      M3EButton(
-        onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Reset'),
-      ),
+      M3EButton.text(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+      M3EButton.text(onPressed: () => Navigator.pop(context), child: const Text('Reset')),
     ],
   ),
 );
 
-// Selection list (single or multi); confirm disabled until a choice is made
-final List<String>? picked = await M3EDialog.showSelectionScreen(
+// Full screen below 600dp, basic dialog above.
+M3EDialog.showAdaptive<void>(
   context,
-  title: 'Choose a plan',
-  options: const <String>['Standard', 'Pro', 'Team'],
-  multiSelect: false,
-);
-
-// Full-screen variant
-M3EDialog.showFullScreen<void>(
-  context,
-  title: 'New event',
-  body: const Padding(
-    padding: EdgeInsets.all(24),
-    child: Text('Full-screen dialog body.'),
-  ),
+  title: 'Create album',
+  content: const Text('Album details'),
+  confirmLabel: 'Save',
+  onConfirm: () => Navigator.pop(context),
 );
 ```
+
+Keyboard: Tab and Shift+Tab stay inside. Space or Enter activates. Escape
+closes.
 
 #### M3EBottomSheet
 
-Modal bottom sheet — use `.show`.
+Modal and standard bottom sheets, full width up to **640**, on **surface
+container low**, with **28** top corners and a **32×4** drag handle. A modal
+sheet opens over a **0.32** scrim at up to half the screen and can be pulled
+up to its content height. `.standard` sits next to the content without a
+scrim. Customize it on `M3EBottomSheetTheme`.
 
 ```dart
+// Modal
 M3EBottomSheet.show<void>(
   context,
-  builder: (context) => const Padding(
-    padding: EdgeInsets.all(24),
-    child: Text('A modal bottom sheet with a drag handle.'),
-  ),
+  builder: (context) => const ShareTargets(),
+);
+
+// Standard, driven by a controller
+final controller = M3EBottomSheetController();
+M3EBottomSheet.standard(
+  controller: controller,
+  previewHeight: 64,
+  child: const PlacesList(),
 );
 ```
+
+Keyboard: Tab focuses the handle, and Space or Enter cycles the heights.
+Escape closes a modal sheet.
 
 #### M3ESideSheet
 
-Side sheet panel — use `.show`.
+Modal and standard side sheets on the end edge, **256** wide (up to **400**).
+A modal sheet is on **surface container low** with **16** corners over a
+**0.32** scrim. A standard sheet is on **surface** and pushes the content.
+`M3ESideSheetLayout` makes it modal below **600**. Customize it on
+`M3ESideSheetTheme`.
 
 ```dart
+// Modal
 M3ESideSheet.show<void>(
   context,
   title: 'Filters',
-  body: const Padding(
-    padding: EdgeInsets.all(24),
-    child: Text('Side sheet content.'),
-  ),
+  body: const FilterList(),
+);
+
+// Standard next to your content, modal on compact windows
+M3ESideSheetLayout(
+  controller: controller,
+  body: const Inbox(),
+  sheet: const M3ESideSheet.standard(title: 'Details', body: Details()),
 );
 ```
+
+Keyboard: Tab moves through the icons, content and actions. Escape closes a
+modal sheet.
 
 ---
 
@@ -1306,49 +943,36 @@ M3ESideSheet.show<void>(
 
 #### M3EAppBar
 
-Top, search, sliver, and bottom app bar variants. Docked top/bottom bars apply
-single-edge `safeArea` padding from `MediaQuery.viewPadding` by default
-(opt out with `safeArea: false`).
+Top, search, sliver and bottom app bars. The small bar is **64**, flexible
+medium **112** and large **120** (taller with a subtitle), and docked bars pad
+for the system bars (`safeArea`). `hideMode` and `M3EAppBarController`
+collapse or hide the bar on scroll. For a `.top` or `.search` bar that
+collapses, set `extendBodyBehindAppBar: true` on the `Scaffold` so the bar
+moves with the content. Customize it on `M3EAppBarTheme`.
 
 ```dart
-M3EAppBar.top(
-  titleText: 'Inbox',
-  leading: const Icon(M3EIcons.menu),
-  actions: const [Icon(M3EIcons.search)],
-);
-
-// Anchored search title — tap opens fullscreen (or docked) search.
-// Idle pill content (leading + hint + trailing) defaults to Alignment.center.
-M3EAppBar.search(
-  searchController: searchController,
-  barHintText: 'Search mail',
-  leading: const Icon(M3EIcons.menu),
-  actions: const [Icon(M3EIcons.tune)],
-  suggestionsBuilder: (context, controller) sync* {
-    yield const ListTile(title: Text('Suggestion'));
-  },
-);
-
-// Sliver (inside CustomScrollView)
-M3EAppBar.sliver(
-  titleText: 'Sliver • medium',
-  actions: const [Icon(M3EIcons.search)],
-);
-
-// Bottom app bar with FAB slot
-M3EAppBar.bottom(
-  actions: const [Icon(M3EIcons.menu), Icon(M3EIcons.search)],
-  floatingActionButton: M3EFab(
-    icon: const Icon(M3EIcons.add),
-    size: M3EFabSize.small,
-    onPressed: () {},
+Scaffold(
+  extendBodyBehindAppBar: true,
+  appBar: M3EAppBar.top(
+    titleText: 'Inbox',
+    variant: M3EAppBarVariant.mediumFlexible,
+    actions: const [Icon(M3EIcons.search)],
   ),
+  body: ListView(children: messages),
 );
+
+// In a CustomScrollView
+M3EAppBar.sliver(titleText: 'Inbox');
 ```
+
+Keyboard: Tab, then Space or Enter on the actions.
 
 #### M3ETabs
 
-Primary and secondary tab bars.
+Primary and secondary tab bars, **48** tall (**64** for primary icon and
+label), with a **3** (primary) or **2** (secondary) indicator. `M3ETabsView`
+keeps a swipeable body in sync, and `.sliver` scrolls away with content.
+Customize it on `M3ETabTheme`.
 
 ```dart
 // in State
@@ -1358,63 +982,22 @@ M3ETabs(
   tabs: const [
     M3ETab(label: 'Overview'),
     M3ETab(label: 'Specs'),
-    M3ETab(label: 'Reviews'),
-  ],
-);
-
-M3ETabs(
-  variant: M3ETabsVariant.secondary,
-  selectedIndex: tabIndex,
-  onTabSelected: (i) => setState(() => tabIndex = i),
-  tabs: const [
-    M3ETab(label: 'Photos', icon: Icon(M3EIcons.calendar_today)),
-    M3ETab(label: 'Albums', icon: Icon(M3EIcons.menu)),
   ],
 );
 ```
 
+Keyboard: Tab enters. Left and Right move. Space or Enter selects.
+
 #### M3ENavigationBar
 
-Bottom navigation aligned with the Material 3 Expressive spec. The selected
-pill scales in place. Wide layout is a row of icon and label chips.
+Bottom navigation with a selection pill that scales in place. Wide windows get
+a row of icon-and-label chips, and `hideOnScroll` with
+`M3ENavigationBarController` hides it on scroll. Customize it on
+`M3ENavigationBarTheme`.
 
 ```dart
 // in State
 M3ENavigationBar(
-  destinations: const [
-    M3ENavigationBarDestination(icon: Icon(M3EIcons.menu), label: 'Home'),
-    M3ENavigationBarDestination(
-      icon: Icon(M3EIcons.search),
-      label: 'Search',
-      badgeDot: true,
-    ),
-  ],
-  selectedIndex: barIndex,
-  onDestinationSelected: (i) => setState(() => barIndex = i),
-);
-
-// Force wide layout (autoLayout off) with end-aligned chips
-M3ENavigationBar(
-  autoLayout: false,
-  layout: M3ENavBarLayout.wide,
-  alignment: M3ENavBarAlignment.end,
-  wideDestinationWidth: 128,
-  iconBehavior: M3ENavBarIconBehavior.alwaysShow,
-  labelBehavior: M3ENavBarLabelBehavior.alwaysShow,
-  destinations: const [
-    M3ENavigationBarDestination(icon: Icon(M3EIcons.home), label: 'Home'),
-    M3ENavigationBarDestination(label: 'Browse'), // label-only
-    M3ENavigationBarDestination(icon: Icon(M3EIcons.radio)), // icon-only
-  ],
-  selectedIndex: barIndex,
-  onDestinationSelected: (i) => setState(() => barIndex = i),
-);
-
-// Custom autoLayout breakpoint + chip width
-M3ENavigationBar(
-  autoLayout: true,
-  wideBreakpoint: 720,
-  wideDestinationWidth: 140,
   destinations: const [
     M3ENavigationBarDestination(icon: Icon(M3EIcons.home), label: 'Home'),
     M3ENavigationBarDestination(icon: Icon(M3EIcons.search), label: 'Search'),
@@ -1424,10 +1007,14 @@ M3ENavigationBar(
 );
 ```
 
+Keyboard: Tab enters. Left and Right move. Space or Enter selects.
+
 #### M3ENavigationRail
 
-Vertical navigation aligned with the Material 3 Expressive spec. The selected
-pill scales in place. Collapsed pills match the navigation bar.
+Vertical navigation, **96** wide collapsed (**80** narrow) and **220–360**
+expanded, with an optional FAB slot. A modal rail closes on the scrim, Escape
+or back. `M3ENavigationRailController` expands, collapses and selects.
+Customize it on `M3ENavigationRailTheme`.
 
 ```dart
 // in State
@@ -1435,60 +1022,50 @@ M3ENavigationRail(
   sections: const [
     M3ENavigationRailSection(
       destinations: [
-        M3ENavigationRailDestination(
-          icon: Icon(M3EIcons.menu),
-          label: 'Home',
-        ),
-        M3ENavigationRailDestination(
-          icon: Icon(M3EIcons.search),
-          label: 'Search',
-        ),
+        M3ENavigationRailDestination(icon: Icon(M3EIcons.home), label: 'Home'),
+        M3ENavigationRailDestination(icon: Icon(M3EIcons.search), label: 'Search'),
       ],
     ),
   ],
   selectedIndex: railIndex,
   onDestinationSelected: (i) => setState(() => railIndex = i),
-  expandTooltip: 'Expand',
-  collapseTooltip: 'Collapse',
-  fab: M3ENavigationRailFabSlot(
-    icon: const Icon(M3EIcons.add),
-    label: 'Compose',
-    elevation: 3,
-    hoverElevation: 4,
-    onPressed: () {},
-  ),
 );
 ```
 
+Keyboard: Tab enters. Arrows move. Space or Enter selects. Escape closes a
+modal rail.
+
 #### M3ENavigationDrawer
 
-Modal drawer aligned with the Material 3 Expressive spec. The selected pill
-scales in place.
+Standard (default) or modal drawer, **360** wide with **16** end corners. A
+modal drawer closes on a destination, the scrim, a drag or back, and
+`M3ENavigationDrawerController` opens and closes it. Customize it on
+`M3ENavigationDrawerTheme`.
 
 ```dart
 // in State
 M3ENavigationDrawer(
   headline: 'Mail',
   destinations: const [
-    M3ENavigationDestination(icon: Icon(M3EIcons.menu), label: 'Home'),
-    M3ENavigationDestination(
-      icon: Icon(M3EIcons.search),
-      label: 'Search',
-      showBadge: true,
-    ),
+    M3ENavigationDestination(icon: Icon(M3EIcons.inbox), label: 'Inbox'),
+    M3ENavigationDestination(icon: Icon(M3EIcons.favorite), label: 'Starred'),
   ],
   selectedIndex: drawerIndex,
   onDestinationSelected: (i) => setState(() => drawerIndex = i),
 );
 ```
 
+Keyboard: Tab enters. Up and Down move. Space or Enter selects.
+
 #### M3EToolbar
 
-Floating or docked toolbar. Floating placement uses `alignment`. `screenOffset`
-(default 16) keeps the pill off the screen edge. Docked ignores both.
+Floating (default) or docked toolbar, **64** tall. A floating toolbar is a
+pill placed by `alignment`, **16** off the edge (`screenOffset`), with an
+optional paired FAB. `M3EToolbar.docked` spans the width and lays out actions
+at **600** and wider with `contentAlignment`. Customize it on
+`M3EToolbarTheme`.
 
 ```dart
-// Floating (default) — pill, wrap-content
 M3EToolbar(
   actions: <M3EToolbarItem>[
     M3EToolbarAction(icon: M3EIcons.edit, onPressed: () {}),
@@ -1496,140 +1073,33 @@ M3EToolbar(
   ],
 );
 
-// Floating + expand trigger + adjacent FAB
-M3EToolbar(
-  expanded: true,
-  onExpandedChanged: (open) {},
-  actions: <M3EToolbarItem>[
-    M3EToolbarAction(
-      icon: M3EIcons.menu,
-      isExpandTrigger: true,
-      onPressed: () {},
-    ),
-    M3EToolbarAction(icon: M3EIcons.edit, onPressed: () {}),
-    M3EToolbarAction(icon: M3EIcons.share, onPressed: () {}),
-  ],
-  fabIcon: const Icon(M3EIcons.add),
-  fabExpandIcon: const Icon(M3EIcons.add),
-  fabCollapseIcon: const Icon(M3EIcons.close),
-  onFabPressed: () {},
-);
-
-// Small FAB — no pill expand/collapse (only onFabPressed)
-M3EToolbar(
-  fabExpandsToolbar: false,
-  onFabPressed: () {},
-  fabExpandIcon: const Icon(M3EIcons.add),
-  actions: <M3EToolbarItem>[...],
-);
-
-// Action selection (internal active index when onActiveIndexChanged is set)
-M3EToolbar(
-  onActiveIndexChanged: (i) {},
-  actions: <M3EToolbarItem>[
-    M3EToolbarAction(
-      icon: M3EIcons.edit,
-      label: 'Edit',
-      onPressed: () {},
-    ),
-    M3EToolbarAction(icon: M3EIcons.share, onPressed: () {}),
-  ],
-);
-
-// Labeled selection — fixed pill width (action labels still spring)
-M3EToolbar(
-  pillActiveSpring: false,
-  onActiveIndexChanged: (i) {},
-  actions: <M3EToolbarItem>[...],
-);
-
-// Scroll-exit / manual visibility
-final visibility = M3EToolbarVisibilityController();
-M3EToolbarScrollWrapper(
-  behavior: M3EToolbarScrollBehavior.exitAlways(controller: visibility),
-  child: ListView(...),
-);
-M3EToolbar(
-  visibilityController: visibility,
-  actions: <M3EToolbarItem>[...],
-);
-
-// Mixed icon actions + custom widgets (widgets stay inline; height-capped)
-M3EToolbar(
-  actions: <M3EToolbarItem>[
-    M3EToolbarAction(icon: M3EIcons.edit, onPressed: () {}),
-    M3EToolbarWidget(
-      child: M3ESplitButton<String>(
-        size: M3EButtonSize.sm,
-        label: 'Sort',
-        items: const [
-          M3ESplitButtonItem(value: 'name', child: 'Name'),
-          M3ESplitButtonItem(value: 'date', child: 'Date'),
-        ],
-        onSelected: (_) {},
-      ),
-    ),
-    M3EToolbarAction(icon: M3EIcons.share, onPressed: () {}),
-  ],
-);
-
-// Vertical floating
-M3EToolbar(
-  axis: Axis.vertical,
-  colorStyle: M3EToolbarColorStyle.vibrant,
-  actions: <M3EToolbarItem>[...],
-);
-
-// Docked — full width; safeArea pads only the dock edge
 M3EToolbar.docked(
-  dockEdge: M3EToolbarDockEdge.bottom,
-  safeArea: true,
-  titleText: 'Inbox',
   actions: <M3EToolbarItem>[
     M3EToolbarAction(icon: M3EIcons.search, onPressed: () {}),
-    M3EToolbarAction(
-      icon: M3EIcons.delete,
-      label: 'Delete',
-      isDestructive: true,
-      onPressed: () {},
-    ),
+    M3EToolbarAction(icon: M3EIcons.delete, onPressed: () {}),
   ],
 );
 ```
 
+Keyboard: Tab or arrows move between actions. Space or Enter activates.
+
 #### M3EMenu
 
-Menu aligned with the Material 3 Expressive spec. Variants are vertical and
-baseline. Opening focuses the first enabled item. Multi-select stays open.
-Back closes a submenu, then the menu, before the route.
+Vertical and baseline menus, **112–280** wide with **48** entries, plus
+groups, submenus and multi-select. Opening focuses the first enabled item,
+and back closes a submenu, then the menu. Customize it on `M3EMenuTheme`.
 
 ```dart
 M3EMenu(
-  anchorBuilder: (context, open) => M3EButton.icon(
-    style: M3EButtonStyle.outlined,
-    icon: const Icon(M3EIcons.arrow_drop_down),
-    label: const Text('Open menu'),
+  anchorBuilder: (context, open) => M3EButton(
     onPressed: open,
+    child: const Text('Open menu'),
   ),
   children: [
     M3EMenuGroup.entries(
       entries: [
-        M3EMenuEntry(
-          label: 'Edit',
-          leading: const Icon(M3EIcons.edit),
-          onPressed: () {},
-        ),
-        const M3EMenuEntry(label: 'Disabled', enabled: false),
-      ],
-    ),
-    M3EMenuGroup.entries(
-      label: 'More',
-      entries: [
-        M3EMenuEntry(
-          label: 'Copy',
-          trailingText: '⌘C',
-          onPressed: () {},
-        ),
+        M3EMenuEntry(label: 'Edit', onPressed: () {}),
+        M3EMenuEntry(label: 'Copy', trailingText: '⌘C', onPressed: () {}),
       ],
     ),
   ],
@@ -1637,7 +1107,7 @@ M3EMenu(
 ```
 
 Keyboard: Up and Down move. Left and Right open or close a submenu. Letters
-jump. Escape closes. Enter or Space activates.
+jump. Enter or Space activates. Escape closes.
 
 ---
 
@@ -1647,142 +1117,62 @@ jump. Escape closes. Enter or Space activates.
 
 #### M3EBadge
 
-Badge aligned with the Material 3 Expressive spec. A 6dp dot or a large label
-(min 16dp) in error colors. It overlays the child without shifting it.
+A **6** dot or a label badge (at least **16**) in **error** and **on error**,
+drawn over its child without moving it. Counts cap at **999**. Customize it on
+`M3EBadgeTheme`.
 
 ```dart
 const M3EBadge(
-  showDot: true,
-  child: Icon(M3EIcons.menu, size: 28),
-);
-
-const M3EBadge(
   count: 8,
-  alignment: M3EBadgeAlignment.topLeft,
-  child: Icon(M3EIcons.calendar_today, size: 28),
-);
-
-const M3EBadge(
-  label: 'New',
-  child: Icon(M3EIcons.mail, size: 28),
+  child: Icon(M3EIcons.mail),
 );
 ```
 
 #### M3EProgressIndicator
 
-Circular and linear progress aligned with the Material 3 Expressive spec,
-including wavy forms. The track is secondary container. Set `showTrack: false`
-to hide it.
+Circular and linear progress, flat or wavy, determinate or indeterminate. The
+indicator is **primary** on a **secondary container** track (`showTrack:
+false` hides it). Customize it on `M3EProgressIndicatorTheme`.
 
 ```dart
-// Classic
-const M3EProgressIndicator.circular();
-M3EProgressIndicator.circular(value: 0.6);
-M3EProgressIndicator.circular(
-  value: 0.6,
-  trackStrokeWidth: 2,
-);
+const M3EProgressIndicator.circular(); // indeterminate
 
-const M3EProgressIndicator.linear();
-SizedBox(
-  width: 200,
-  child: M3EProgressIndicator.linear(value: 0.6),
-);
-
-// Hide track (e.g. inside a button)
-M3EProgressIndicator.circular(showTrack: false);
-
-// Expressive wavy (Compose CircularWavy / LinearWavy)
-const M3EProgressIndicator.circularWavy();
-M3EProgressIndicator.circularWavy(value: 0.6);
-
-SizedBox(
-  width: 200,
-  child: M3EProgressIndicator.linearWavy(),
-);
-SizedBox(
-  width: 200,
-  child: M3EProgressIndicator.linearWavy(value: 0.6),
-);
+M3EProgressIndicator.linearWavy(value: 0.6);
 ```
 
 #### M3ELoadingIndicator
 
-Indeterminate loading shape aligned with the Material 3 Expressive spec.
-Default outer size is 48 and the active shape is 38. There is no elevation.
+Indeterminate morphing shape, **48** outer and **38** active by default,
+plain or `contained`. `size` scales both together. Customize it on
+`M3ELoadingIndicatorTheme`.
 
 ```dart
 const M3ELoadingIndicator();
 
 const M3ELoadingIndicator(
   variant: M3ELoadingIndicatorVariant.contained,
-);
-
-// Ratio-preserving scale (outer 96 → active 76)
-const M3ELoadingIndicator(size: 96);
-
-M3ELoadingIndicator(
-  indicatorSize: 32,
-  containerWidth: 56,
-  containerHeight: 56,
-  containerShape: const RoundedRectangleBorder(
-    borderRadius: BorderRadius.all(Radius.circular(12)),
-  ),
-  indicatorColors: const <Color>[
-    Color(0xff6750a4),
-    Color(0xff006a6a),
-  ],
-);
-
-// Host-driven rotation (e.g. during pull-to-refresh drag)
-M3ELoadingIndicator(
-  variant: M3ELoadingIndicatorVariant.contained,
-  rotationTurns: dragTurns,
+  size: 96,
 );
 ```
 
 #### M3ERefreshIndicator
 
-Pull-to-refresh wrapper for scrollables. Default and `.contained` kinds always
-build a **contained** `M3ELoadingIndicator`; optional `elevation` is applied on
-the refresh host shell (including Flutter web). Reveal starts after
-`2 × indicatorPadding`; arm / refresh only when fully revealed. List pad is
-capped by `contentDragOffset` (defaults to indicator height +
-`2 × indicatorPadding`). Use `M3ERefreshIndicatorController` (or a
-`GlobalKey<M3ERefreshIndicatorState>`) for programmatic `show()`.
+Pull-to-refresh for scrollables that shows a contained `M3ELoadingIndicator`.
+It arms once fully revealed, and `M3ERefreshIndicatorController.show()`
+refreshes from code. Customize it on `M3ERefreshIndicatorTheme`.
 
 ```dart
-final controller = M3ERefreshIndicatorController();
-
 M3ERefreshIndicator(
-  controller: controller,
-  onRefresh: () async {
-    await Future<void>.delayed(const Duration(seconds: 2));
-  },
-  child: ListView.builder(
-    itemCount: 12,
-    itemBuilder: (context, index) => Text('Item ${index + 1}'),
-  ),
+  onRefresh: () async => reload(),
+  child: ListView(children: items),
 );
-
-// Contained shell + optional elevation / pad overrides
-M3ERefreshIndicator.contained(
-  controller: controller,
-  elevation: 3,
-  indicatorPadding: 8,
-  contentDragOffset: 72,
-  onRefresh: () async {},
-  child: listView,
-);
-
-// Manual trigger
-await controller.show();
 ```
 
 #### M3ETooltip
 
-Plain or rich tooltip aligned with the Material 3 Expressive spec. Plain sits
-above the target. Rich can stay open with `persistent`.
+Plain tooltip (up to **200** wide, above the target) or rich tooltip (up to
+**320**, with a title and actions). `persistent` keeps a rich tooltip open.
+Customize it on `M3ETooltipTheme`.
 
 ```dart
 M3ETooltip(
@@ -1792,25 +1182,15 @@ M3ETooltip(
     onPressed: () {},
   ),
 );
-
-M3ETooltip(
-  persistent: true,
-  richTitle: 'Compose',
-  richMessage: 'Start a new draft with expressive defaults.',
-  actions: <Widget>[
-    M3EButton.text(onPressed: () {}, child: Text('Got it')),
-  ],
-  child: M3EIconButton(
-    icon: const Icon(M3EIcons.edit),
-    onPressed: () {},
-  ),
-);
 ```
+
+Keyboard: the tooltip shows when its child gets keyboard focus.
 
 #### M3ESnackbar
 
-Brief message aligned with the Material 3 Expressive spec. A bar with an
-action or close button stays until dismissed. Escape dismisses it when focused.
+Short message at the bottom, at least **48** tall and up to **600** wide, with
+an optional action and close button. A bar with either stays until dismissed.
+Customize it on `M3ESnackbarTheme`.
 
 ```dart
 M3ESnackbar.show(
@@ -1818,66 +1198,60 @@ M3ESnackbar.show(
   message: 'Draft saved',
   actionLabel: 'Undo',
   onAction: () {},
-  showCloseButton: true,
 );
 ```
 
-Keyboard: Escape dismisses when focused.
+Keyboard: Escape dismisses it when focused.
 
 #### M3ETextField
 
-Filled or outlined field with a floating label. Height grows with `maxLines`.
+Filled or outlined field, **56** tall with **4** corners, and a label that
+springs between the middle and the top. It supports icons, prefix and suffix
+text, a placeholder, supporting or error text, a counter, required and
+read-only fields, clear and password buttons, multi-line input and `density`
+(**0** to **-3**). Focus is **primary** and errors are **error**. Customize it
+on `M3ETextFieldTheme` and `M3ETextFieldColorTheme`.
 
 ```dart
 M3ETextField(
   controller: nameController,
   label: 'Full name',
   supportingText: 'As it appears on your ID',
-  leading: const Icon(M3EIcons.edit),
+  showClearButton: true,
 );
 
 const M3ETextField(
-  label: 'Email',
+  label: 'Password',
   variant: M3ETextFieldVariant.outlined,
-  errorText: 'Enter a valid email address',
+  obscureText: true,
+  showPasswordToggle: true,
 );
 ```
 
-#### M3ESearchBar / M3ESearchAnchor
+Keyboard: Tab focuses enabled fields. Escape unfocuses.
 
-Search field, or a bar that opens a full search view. Escape closes the view.
-Enter or Space on the anchor opens it.
+#### M3ESearchBar / M3ESearchAnchor / M3ESliverSearchBar
+
+**56** pill search bar on **surface container high**, **24** from its pane and
+**12** when focused, and a search view (contained or divided) that is
+full-screen below **600** and docked above. `M3ESliverSearchBar` scrolls away
+with content. Customize it on `M3ESearchBarTheme` and `M3ESearchViewTheme`.
 
 ```dart
-// Inline bar
-M3ESearchBar(
-  controller: searchController,
-  hintText: 'Search components',
-  trailing: [
-    M3EIconButton(
-      icon: const Icon(M3EIcons.close),
-      onPressed: searchController.clear,
-    ),
-  ],
-);
-
-// Anchor + search view
 final controller = M3ESearchController();
+
 M3ESearchAnchor.bar(
   searchController: controller,
-  barHintText: 'Search',
-  suggestionsBuilder: (context, controller) sync* {
-    for (final name in names.where((n) => n.contains(controller.text))) {
-      yield ListTile(
-        title: Text(name),
-        onTap: () => controller.closeView(name),
-      );
-    }
-  },
+  barHintText: 'Search messages',
+  suggestionsBuilder: (context, controller) => [
+    for (final name in names)
+      M3EListItem(headline: name, onTap: () => controller.closeView(name)),
+  ],
 );
 ```
 
-Keyboard: Enter or Space opens the view. Escape closes it.
+Keyboard: Tab, then Space or Enter opens the view. Arrows move through
+results. Escape closes.
 
 ---
 
@@ -1889,9 +1263,9 @@ Several components present transient UI over the app. They all require a
 
 | Component | API |
 | --------- | --- |
-| `M3EDialog` | `M3EDialog.show`, `M3EDialog.showFullScreen` |
-| `M3EBottomSheet` | `M3EBottomSheet.show` |
-| `M3ESideSheet` | `M3ESideSheet.show` |
+| `M3EDialog` | `M3EDialog.show`, `.showSelectionScreen`, `.showFullScreen`, `.showAdaptive` |
+| `M3EBottomSheet` | `M3EBottomSheet.show`, `.showAdaptive`, `.standard` |
+| `M3ESideSheet` | `M3ESideSheet.show`, `M3ESideSheetLayout` |
 | `M3ESnackbar` | `M3ESnackbar.show` |
 
 ## Example app (detailed)
@@ -1911,7 +1285,10 @@ The [`example/`](example/) project is a full gallery app:
   scale, variable-font axes, and conversion demos.
 - **Pages:** playgrounds under
   [`example/lib/pages/playground/`](example/lib/pages/playground/), grouped
-  by tab (`do/`, `pick/`, `view/`, `nav/`, `find/`).
+  by tab (`do/`, `pick/`, `view/`, `nav/`, `find/`). Each opens on
+  [`preview_screen.dart`](example/lib/pages/preview/preview_screen.dart); the
+  shared layout and controls live in
+  [`example/lib/widgets/playground/`](example/lib/widgets/playground/).
 - **Theme toggle:** app-bar `M3EIconButton` calls
   `M3ETheme.controllerOf(context)?.toggleBrightness(...)`.
 

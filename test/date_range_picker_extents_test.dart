@@ -21,7 +21,7 @@ void main() {
               height: 480,
               child: M3ECalendarDateRangePicker(
                 firstDate: firstDate,
-                lastDate: DateTime(firstDate.year + 3, firstDate.month, 1),
+                lastDate: DateTime(firstDate.year + 3, firstDate.month),
                 currentDate: DateTime(2026, 8, 28),
                 initialStartDate: initialStartDate,
                 onStartDateChanged: (_) {},
@@ -39,7 +39,7 @@ void main() {
   ) async {
     // 26 months of history: the anchor jump must not lay out intermediate
     // months (itemExtentBuilder) and must land exactly on August 2026.
-    await pumpPicker(tester, firstDate: DateTime(2024, 7, 1));
+    await pumpPicker(tester, firstDate: DateTime(2024, 7));
 
     expect(find.text('August 2026'), findsOneWidget);
     expect(find.text('July 2024'), findsNothing);
@@ -48,11 +48,15 @@ void main() {
   testWidgets('scrolling to the top lands exactly on the first month', (
     tester,
   ) async {
-    await pumpPicker(tester, firstDate: DateTime(2024, 7, 1));
+    await pumpPicker(tester, firstDate: DateTime(2024, 7));
 
     // Fling up repeatedly to reach the top of the list.
     for (var i = 0; i < 12; i++) {
-      await tester.fling(find.byType(M3ECalendarDateRangePicker), const Offset(0, 600), 4000);
+      await tester.fling(
+        find.byType(M3ECalendarDateRangePicker),
+        const Offset(0, 600),
+        4000,
+      );
       await tester.pumpAndSettle();
     }
 
@@ -64,7 +68,7 @@ void main() {
   testWidgets('opens anchored on the selected start month', (tester) async {
     await pumpPicker(
       tester,
-      firstDate: DateTime(2024, 7, 1),
+      firstDate: DateTime(2024, 7),
       initialStartDate: DateTime(2025, 3, 10),
     );
 

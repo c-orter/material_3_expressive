@@ -25,6 +25,8 @@ class M3EToolbarIconButton extends StatefulWidget {
     required this.size,
     this.onPressed,
     this.variant,
+    this.shape = M3EIconButtonShapeVariant.round,
+    this.colorStyle = M3EToolbarColorStyle.standard,
     this.pillActiveSpring = true,
     this.labelMode = M3EToolbarLabelMode.activeOnly,
     super.key,
@@ -42,9 +44,15 @@ class M3EToolbarIconButton extends StatefulWidget {
   /// Overrides [M3EToolbarAction.onPressed] when set (e.g. expand trigger).
   final VoidCallback? onPressed;
 
-  /// Defaults to filled when [M3EToolbarAction.isExpandTrigger] or
-  /// [M3EToolbarAction.active], else standard.
+  /// Defaults to filled for an expand trigger, tonal when selected, else
+  /// standard.
   final M3EIconButtonVariant? variant;
+
+  /// Round on a floating toolbar. Docked actions may be square.
+  final M3EIconButtonShapeVariant shape;
+
+  /// Selects the tonal colors for an active action.
+  final M3EToolbarColorStyle colorStyle;
 
   /// Reserved for parent [M3EToolbar.pillActiveSpring]; labeled width always
   /// follows the morph spring so padding and animation stay correct.
@@ -138,8 +146,10 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
 
   M3EIconButtonVariant get _resolvedVariant =>
       widget.variant ??
-      (widget.action.isExpandTrigger || widget.action.active
+      (widget.action.isExpandTrigger
           ? M3EIconButtonVariant.filled
+          : widget.action.active
+          ? M3EIconButtonVariant.tonal
           : M3EIconButtonVariant.standard);
 
   VoidCallback? get _resolvedOnPressed => widget.action.enabled
@@ -193,15 +203,41 @@ class _M3EToolbarIconButtonState extends State<M3EToolbarIconButton>
     required Widget icon,
     Size? visualSize,
   }) {
-    return M3EIconButton(
+    final Widget button = M3EIconButton(
       icon: icon,
       onPressed: _resolvedOnPressed,
       tooltip: widget.action.tooltip ?? widget.action.label,
       semanticLabel: widget.action.semanticLabel,
       size: widget.size,
+      shape: widget.shape,
       variant: _resolvedVariant,
       visualSize: visualSize,
       decoration: _decorationFor(context),
+    );
+    if (!widget.action.active || widget.action.isExpandTrigger) {
+      return button;
+    }
+    if (widget.action.color != null) {
+      return button;
+    }
+    final M3EThemeData theme = M3ETheme.of(context);
+    final M3EToolbarColors colors = theme.toolbarTheme.colors(
+      theme.colorScheme,
+      widget.colorStyle,
+    );
+    final Color? selectedBackground = colors.selectedContainer;
+    final Color? selectedForeground = colors.selectedContent;
+    if (selectedBackground == null || selectedForeground == null) {
+      return button;
+    }
+    return M3ETheme(
+      data: theme.copyWith(
+        colorScheme: theme.colorScheme.copyWith(
+          secondaryContainer: selectedBackground,
+          onSecondaryContainer: selectedForeground,
+        ),
+      ),
+      child: button,
     );
   }
 

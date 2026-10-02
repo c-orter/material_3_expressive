@@ -14,6 +14,8 @@ Runbook for building the Material 3 Expressive gallery web demo into [`docs/`](d
 
 Do **not** skip post-build steps. Follow [AGENTS.md](AGENTS.md): use FVM Flutter at [`.fvm/flutter_sdk/bin/flutter`](.fvm/flutter_sdk/bin/flutter), run `dart analyze` after changes, and do **not** commit or push unless the user explicitly asks.
 
+**The workflow ends at Step E's verification commands.** Do **not** attempt to host, serve, or preview the built app locally once the build and post-processing are complete (no local HTTP server, dev server, or browser preview of [`docs/`](docs/)). The manual smoke test below is for the user, against the live demo.
+
 ## Context
 
 | Item | Value |
@@ -21,7 +23,7 @@ Do **not** skip post-build steps. Follow [AGENTS.md](AGENTS.md): use FVM Flutter
 | Live demo | https://paadevelopments.github.io/material_3_expressive/ |
 | Site root | [`docs/`](docs/) (GitHub Pages) |
 | Base href | `/material_3_expressive/` |
-| Flutter SDK | `3.44.0` via FVM ([`.fvmrc`](.fvmrc)) |
+| Flutter SDK | `3.47.0` via FVM ([`.fvmrc`](.fvmrc)) |
 
 `flutter build web` writes a fresh [`docs/index.html`](docs/index.html) from [`example/web/index.html`](example/web/index.html) using `flutter_bootstrap.js`. That default loader caused blank-page hangs on iOS Safari. The patched index instead uses `flutter.js` + `loadEntrypoint` with `renderer: "canvaskit"`, plus an inline splash screen. Splash and loader customizations live **only** in docs — not in the example app.
 
@@ -138,7 +140,10 @@ test -f docs/.nojekyll
 
 ### Manual smoke test
 
-1. Open https://paadevelopments.github.io/material_3_expressive/ (or serve `docs/` locally under that base path).
+Done by the user on the live demo after publishing — agents do **not** host
+the build locally to run it.
+
+1. Open https://paadevelopments.github.io/material_3_expressive/.
 2. Hard refresh with cache disabled.
 3. Splash appears immediately (title, shapes, loader) and fades when the gallery loads.
 4. Toggle system light/dark mode — splash colors adapt.
@@ -157,4 +162,5 @@ From the repository root, when `docs/index.web-release.html` already exists:
 cd example && ../.fvm/flutter_sdk/bin/flutter build web --release --base-href /material_3_expressive/ --output ../docs && cd .. && cp docs/index.web-release.html docs/index.html && (test -f docs/.nojekyll || touch docs/.nojekyll)
 ```
 
-Then run the Step E verification commands above.
+Then run the Step E verification commands above. Stop there — do not host the
+build locally.
