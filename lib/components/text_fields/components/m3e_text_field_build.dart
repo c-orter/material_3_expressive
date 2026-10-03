@@ -325,18 +325,23 @@ extension _M3ETextFieldBuild on _M3ETextFieldState {
             bottom: verticalPadding,
           )
         : EdgeInsets.symmetric(vertical: centered);
+    final bool hasInput =
+        !widget.readOnly ||
+        _populated ||
+        widget.placeholder != null ||
+        widget.prefixText != null ||
+        widget.suffixText != null;
     final Widget inputRow = _buildInputRow(theme, fieldTheme, colors, input);
     final Widget child = widget.content == null
         ? inputRow
-        : Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[inputRow, widget.content!],
-          );
-    return Padding(
-      padding: padding,
-      child: child,
-    );
+        : (hasInput
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[inputRow, widget.content!],
+                )
+              : widget.content!);
+    return Padding(padding: padding, child: child);
   }
 
   Widget _buildInputRow(

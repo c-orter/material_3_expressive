@@ -14,7 +14,9 @@ mixin _M3ENavigationRailChildrenMixin on State<M3ENavigationRail> {
       return null;
     }
     return Padding(
-      padding: const EdgeInsetsDirectional.symmetric(horizontal: 16),
+      padding: _showExpandedItems
+          ? EdgeInsetsDirectional.zero
+          : const EdgeInsetsDirectional.symmetric(horizontal: 16),
       child: Align(
         alignment: _showExpandedItems
             ? AlignmentDirectional.centerStart

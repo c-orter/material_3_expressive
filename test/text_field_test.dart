@@ -27,6 +27,10 @@ void main() {
     'M3ESearchBar unfocuses on tap outside by default',
     _m3esearchbarUnfocusesOnTapOutsideByDefault,
   );
+  testWidgets(
+    'M3ETextField renders content directly in primary slot when readOnly without input',
+    _m3etextfieldRendersContentDirectlyInPrimarySlotWhenReadOnlyWithoutInput,
+  );
 }
 
 Future<void> _m3etextfieldKeepsAStableSizeWhenFocusChanges(
@@ -197,4 +201,31 @@ Future<void> _m3esearchbarUnfocusesOnTapOutsideByDefault(
   await tester.tapAt(const Offset(20, 300));
   await tester.pump();
   expect(focusNode.hasFocus, isFalse);
+}
+
+Future<void>
+_m3etextfieldRendersContentDirectlyInPrimarySlotWhenReadOnlyWithoutInput(
+  WidgetTester tester,
+) async {
+  await tester.pumpWidget(
+    M3EMaterialApp(
+      data: M3EThemeData.light(seedColor: const Color(0xFF6750A4)),
+      home: const Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: 300,
+            child: M3ETextField(
+              label: 'Shelves',
+              readOnly: true,
+              alwaysFloating: true,
+              content: SizedBox(key: Key('chip-content'), height: 32),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  expect(find.byKey(const Key('chip-content')), findsOneWidget);
+  expect(find.byType(EditableText), findsNothing);
 }
