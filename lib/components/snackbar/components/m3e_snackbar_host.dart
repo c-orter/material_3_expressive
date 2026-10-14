@@ -122,6 +122,12 @@ class M3ESnackbarHostState extends State<M3ESnackbarHost>
     _removeEntry();
   }
 
+  void _onSwipeDismissed() {
+    _dismissing = true;
+    _timer?.cancel();
+    _removeEntry();
+  }
+
   void _removeEntry() {
     widget.controller?.notifyClosed(widget.entry);
     try {
@@ -161,7 +167,11 @@ class M3ESnackbarHostState extends State<M3ESnackbarHost>
                 },
                 child: M3ESnackbarDismissScope(
                   dismiss: dismiss,
-                  child: widget.child,
+                  child: Dismissible(
+                    key: ObjectKey(widget.entry),
+                    onDismissed: (_) => _onSwipeDismissed(),
+                    child: widget.child,
+                  ),
                 ),
               ),
             ),
