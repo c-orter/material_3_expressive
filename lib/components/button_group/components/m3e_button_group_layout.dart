@@ -542,14 +542,24 @@ extension _M3EButtonGroupLayout on _M3EButtonGroupState {
       : Column(mainAxisSize: MainAxisSize.min, children: children);
 
   Widget _buildGap(BuildContext context, int beforeIndex, double spacing) {
-    return ValueListenableBuilder<int?>(
-      valueListenable: _focusedIndexNotifier,
-      builder: (context, focusedIndex, _) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        _focusedIndexNotifier,
+        M3EFocusInteraction.instance,
+      ]),
+      builder: (context, _) {
         // [spacing] is already size-token between-space (standard) or 2dp
-        // (connected) from metricsFor. Focus rings only expand connected gaps.
+        // (connected) from metricsFor. Focus rings only expand connected gaps,
+        // and only while a keyboard ring is visible: a tap also takes focus,
+        // which must not change the gap.
+        final ringVisible =
+            M3EFocusInteraction.instance.ringsAllowed &&
+            M3EFocusRing.indicatorsEnabledOf(context) &&
+            FocusManager.instance.highlightMode ==
+                FocusHighlightMode.traditional;
         final gap = _FocusRingGapRenderer.resolveGap(
           connected: widget._connected,
-          focusedIndex: focusedIndex,
+          focusedIndex: ringVisible ? _focusedIndexNotifier.value : null,
           beforeIndex: beforeIndex,
           spacing: spacing,
           focusRingOutset: M3EFocusRing.outsetOf(context),
