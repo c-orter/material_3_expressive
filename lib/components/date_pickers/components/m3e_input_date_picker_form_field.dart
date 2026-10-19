@@ -76,8 +76,13 @@ class M3EInputDatePickerFormField extends StatefulWidget {
 class _M3EInputDatePickerFormFieldState
     extends State<M3EInputDatePickerFormField> {
   final TextEditingController _controller = TextEditingController();
+  final FocusNode _ownedFocusNode = FocusNode(
+    debugLabel: 'M3EInputDatePickerFormField',
+  );
   DateTime? _selectedDate;
   bool _autoSelected = false;
+
+  FocusNode get _effectiveFocusNode => widget.focusNode ?? _ownedFocusNode;
 
   @override
   void initState() {
@@ -87,7 +92,9 @@ class _M3EInputDatePickerFormFieldState
         : M3EDatePickerUtils.dateOnly(widget.initialDate!);
     if (widget.autofocus) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        (widget.focusNode ?? FocusNode()).requestFocus();
+        if (mounted) {
+          _effectiveFocusNode.requestFocus();
+        }
       });
     }
   }
@@ -95,6 +102,7 @@ class _M3EInputDatePickerFormFieldState
   @override
   void dispose() {
     _controller.dispose();
+    _ownedFocusNode.dispose();
     super.dispose();
   }
 
@@ -198,7 +206,7 @@ class _M3EInputDatePickerFormFieldState
       builder: (FormFieldState<String> field) {
         return M3ETextField(
           controller: _controller,
-          focusNode: widget.focusNode,
+          focusNode: _effectiveFocusNode,
           label: widget.fieldLabelText ?? localizations.dateInputLabel,
           keyboardType: widget.keyboardType ?? TextInputType.datetime,
           errorText: field.errorText,
