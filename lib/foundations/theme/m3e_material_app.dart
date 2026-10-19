@@ -323,7 +323,7 @@ class _M3EMaterialAppState extends State<M3EMaterialApp>
     ).copyWith(
       statusBarIconBrightness: iconBrightness,
       systemNavigationBarIconBrightness: iconBrightness,
-      statusBarBrightness: iconBrightness,
+      statusBarBrightness: brightness,
       systemStatusBarContrastEnforced: false,
       systemNavigationBarContrastEnforced: false,
     );
