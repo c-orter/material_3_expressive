@@ -194,10 +194,6 @@ extension _M3EButtonGroupBuild on _M3EButtonGroupState {
     required bool isVisualFirst,
     required bool isVisualLast,
   }) {
-    final autofocus =
-        action.autofocus ||
-        (!widget.actions.any((item) => item.autofocus) &&
-            index == widget.actions.indexWhere((item) => item.enabled));
     final onPressed = action.enabled
         ? () => _onSelectionChange(index, !selected)
         : null;
@@ -222,7 +218,7 @@ extension _M3EButtonGroupBuild on _M3EButtonGroupState {
       decoration: _cachedDecorations[index],
       statesController: _controllers[index],
       focusNode: action.focusNode ?? _focusNodes[index],
-      autofocus: autofocus,
+      autofocus: action.autofocus,
       enableFeedback: action.enableFeedback ?? widget.enableFeedback,
       onFocusChange: (focused) {
         action.onFocusChange?.call(focused);

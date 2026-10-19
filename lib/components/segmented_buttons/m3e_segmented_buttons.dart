@@ -151,15 +151,6 @@ class _M3ESegmentedButtonState<T> extends State<M3ESegmentedButton<T>> {
     }
   }
 
-  int get _firstEnabledIndex {
-    for (var i = 0; i < widget.segments.length; i++) {
-      if (widget._isSegmentEnabled(i)) {
-        return i;
-      }
-    }
-    return 0;
-  }
-
   @override
   Widget build(BuildContext context) {
     return M3EComponentTheme(builder: _buildButton);
@@ -336,7 +327,6 @@ class _M3ESegmentedButtonState<T> extends State<M3ESegmentedButton<T>> {
     double layoutHeight,
   ) {
     final children = <Widget>[];
-    final firstEnabled = _firstEnabledIndex;
     for (var i = 0; i < widget.segments.length; i++) {
       if (i > 0) {
         children.add(SizedBox(width: segmentedButtonTheme.borderWidth));
@@ -355,7 +345,6 @@ class _M3ESegmentedButtonState<T> extends State<M3ESegmentedButton<T>> {
               Directionality.of(context),
             ),
             focusNode: _focusNodes[i],
-            autofocus: i == firstEnabled && widget._isSegmentEnabled(i),
             onFocusChanged: (bool focused) =>
                 _handleSegmentFocus(i, focused: focused),
           ),
@@ -432,7 +421,6 @@ class _M3ESegmentTile<T> extends StatelessWidget {
     required this.layoutHeight,
     required this.segmentRadius,
     required this.focusNode,
-    required this.autofocus,
     required this.onFocusChanged,
   });
 
@@ -443,7 +431,6 @@ class _M3ESegmentTile<T> extends StatelessWidget {
   final double layoutHeight;
   final BorderRadius segmentRadius;
   final FocusNode focusNode;
-  final bool autofocus;
 
   /// Reports keyboard focus so the group can paint the ring above its clip.
   final ValueChanged<bool> onFocusChanged;
@@ -468,7 +455,6 @@ class _M3ESegmentTile<T> extends StatelessWidget {
         onTap: enabled ? () => parent._handleTap(segment.value) : null,
         enabled: enabled,
         focusNode: focusNode,
-        autofocus: autofocus,
         semanticLabel: segment.resolvedSemanticLabel,
         semanticButton: false,
         excludeSemantics: true,

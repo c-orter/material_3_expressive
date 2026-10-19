@@ -166,7 +166,7 @@ class _M3ESearchViewContentState extends State<M3ESearchViewContent>
         velocity: _fade.velocity,
       ),
     );
-    final TickerFuture done = _progress.animateWith(
+    _progress.animateWith(
       m3eSearchSpringSimulation(
         viewTheme.containerTransformSpring,
         from: _progress.value,
@@ -175,15 +175,15 @@ class _M3ESearchViewContentState extends State<M3ESearchViewContent>
       ),
     );
     if (open) {
-      done.whenCompleteOrCancel(_tryFocusViewField);
+      _tryFocusViewField();
     }
   }
 
+  /// Focuses the field on the first expansion, like Compose's `SearchBar`.
   void _tryFocusViewField() {
     if (_viewFocusRequested || !mounted || !_opening) {
       return;
     }
-    // Focus once the transform settles so the soft keyboard attaches once.
     _viewFocusRequested = true;
     _viewFocusNode.requestFocus();
   }
