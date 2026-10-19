@@ -220,7 +220,10 @@ M3ETheme(
 ```
 
 Use `M3EThemeData.dark(...)` for a dark scheme. If no `M3ETheme` is found,
-components fall back to a default light theme.
+components fall back to a default light theme. Unlike `M3EMaterialApp`, this
+path does not set a system bar style, so wrap your app in an
+`AnnotatedRegion<SystemUiOverlayStyle>` (for example
+`SystemUiOverlayStyle.dark` for a light theme) to restore it after modals close.
 
 ### Accessing theme tokens
 

@@ -11,7 +11,7 @@ void main() {
     expect(style.systemNavigationBarColor, Colors.transparent);
     expect(style.statusBarIconBrightness, Brightness.light);
     expect(style.systemNavigationBarIconBrightness, Brightness.light);
-    expect(style.statusBarBrightness, Brightness.light);
+    expect(style.statusBarBrightness, Brightness.dark);
     expect(style.systemStatusBarContrastEnforced, isFalse);
     expect(style.systemNavigationBarContrastEnforced, isFalse);
   });
@@ -21,7 +21,7 @@ void main() {
 
     expect(style.statusBarColor, Colors.transparent);
     expect(style.statusBarIconBrightness, Brightness.light);
-    expect(style.statusBarBrightness, Brightness.light);
+    expect(style.statusBarBrightness, Brightness.dark);
     expect(style.systemStatusBarContrastEnforced, isFalse);
     expect(style.systemNavigationBarIconBrightness, isNull);
     expect(style.systemNavigationBarColor, isNull);
