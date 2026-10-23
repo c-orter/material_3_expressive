@@ -6,7 +6,8 @@ import 'package:flutter/foundation.dart' show clampDouble, kIsWeb;
 import 'package:flutter/gestures.dart'
     show DragUpdateDetails, PointerDeviceKind;
 import 'package:flutter/physics.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:material_ui/material_ui.dart'
+    hide CornerRounding, RoundedPolygon;
 import 'package:motor/motor.dart';
 
 import '../../foundations/foundations.dart';
