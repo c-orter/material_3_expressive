@@ -6,6 +6,36 @@
   and `CornerRounding`, which clash with the ones this package re-exports from
   `material_new_shapes`. If you import both packages, add
   `hide CornerRounding, RoundedPolygon` to the `material_ui` import.
+* **Button group, segmented buttons:** the first enabled action or segment no
+  longer takes focus on mount. Set `autofocus` on an action to focus it
+  ([#35](https://github.com/paadevelopments/material_3_expressive/pull/35),
+  thanks @StillMisty).
+* **Search:** the view field takes focus as soon as the view starts opening,
+  instead of after the expand animation settles
+  ([#35](https://github.com/paadevelopments/material_3_expressive/pull/35),
+  thanks @StillMisty).
+* **Example:** the iOS runner targets iOS 15.0.
+
+### Fixed
+
+* **Buttons:** `M3EButton` with only an `icon` or only a `label` now renders
+  that content
+  ([#34](https://github.com/paadevelopments/material_3_expressive/pull/34),
+  thanks @StillMisty).
+* **Button group:** icon-only actions in the overflow menu are titled with
+  their `semanticLabel` or `tooltip` instead of "Option N"
+  ([#34](https://github.com/paadevelopments/material_3_expressive/pull/34),
+  thanks @StillMisty). Connected gaps widen only for a visible keyboard focus
+  ring, so tapping an action no longer shifts the layout
+  ([#38](https://github.com/paadevelopments/material_3_expressive/pull/38)).
+* **Date pickers:** `M3EInputDatePickerFormField` with `autofocus` now focuses
+  its field, including when no `focusNode` is passed
+  ([#37](https://github.com/paadevelopments/material_3_expressive/pull/37),
+  thanks @StillMisty).
+* **Theme:** on iOS, `M3EMaterialApp` and `M3EScrimSystemUi` set the correct
+  `statusBarBrightness`, so status bar text contrasts with the theme and with
+  scrims
+  ([#40](https://github.com/paadevelopments/material_3_expressive/pull/40)).
 
 ## 1.1.7
 
