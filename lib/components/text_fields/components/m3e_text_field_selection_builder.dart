@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
 /// Text selection gestures for `M3ETextField`.
@@ -10,6 +11,16 @@ class M3ETextFieldSelectionBuilder extends TextSelectionGestureDetectorBuilder {
 
   /// Called after a user tap.
   final VoidCallback? onTap;
+
+  @override
+  void onSingleTapUp(TapDragUpDetails details) {
+    // A read-only field showing only `content` mounts no EditableText, so
+    // the base handler has no editable to place a caret in. The detector
+    // still dispatches onUserTap afterwards.
+    if (delegate.editableTextKey.currentState != null) {
+      super.onSingleTapUp(details);
+    }
+  }
 
   @override
   void onUserTap() => onTap?.call();
