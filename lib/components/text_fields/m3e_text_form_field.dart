@@ -3,9 +3,10 @@ import 'package:flutter/widgets.dart';
 
 import 'm3e_text_fields.dart';
 
-/// A no-op default builder so the [M3ETextFormField] renders only through its
-/// own [FormField] state wiring.
-Widget _noopBuilder(FormFieldState<String> field) => const SizedBox.shrink();
+/// Default builder: renders through the state so [FormFieldState.build]
+/// registers the field with its enclosing [Form].
+Widget _stateBuilder(FormFieldState<String> field) =>
+    (field as M3ETextFormFieldState)._buildField();
 
 /// Form-interoperable wrapper around [M3ETextField]: mirrors the classic
 /// TextFormField behavior — validator, initialValue, autovalidateMode and
@@ -73,7 +74,7 @@ class M3ETextFormField extends FormField<String> {
     super.initialValue,
     super.validator,
     super.autovalidateMode = AutovalidateMode.disabled,
-    super.builder = _noopBuilder,
+    super.builder = _stateBuilder,
   }) : assert(
          controller == null || initialValue == null,
          'controller and initialValue are mutually exclusive',
@@ -319,8 +320,7 @@ class M3ETextFormFieldState extends FormFieldState<String> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildField() {
     return M3ETextField(
       controller: _effectiveController,
       focusNode: widget.focusNode,
