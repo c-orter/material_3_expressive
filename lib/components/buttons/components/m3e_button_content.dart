@@ -171,10 +171,10 @@ extension _M3EButtonContent on _M3EButtonState {
   ) {
     Widget child = _usesSelection
         ? _buildSelectionContent(m)
-        : widget.icon != null && widget.label != null
+        : widget.icon != null || widget.label != null
         ? _M3EButtonIconLayout(
-            icon: widget.icon!,
-            label: widget.label!,
+            icon: widget.icon,
+            label: widget.label,
             size: widget.size,
             iconAlignment: _decoration?.iconAlignment ?? IconAlignment.start,
           )

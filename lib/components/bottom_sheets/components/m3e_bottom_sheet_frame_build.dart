@@ -101,12 +101,18 @@ extension _M3EBottomSheetFrameBuild on _M3EBottomSheetFrameState {
   }
 
   Widget _predictiveBack(Widget child, double width, double visible) {
-    final double progress = widget.backProgress?.value ?? 0;
-    if (progress <= 0 || width <= 0 || visible <= 0) {
+    final ValueListenable<double>? back = widget.backProgress;
+    if (back == null) {
       return child;
     }
-    final double sx = 1 - _theme.predictiveBackShrinkX * progress / width;
-    final double sy = 1 - _theme.predictiveBackShrinkY * progress / visible;
+    final double progress = clampDouble(back.value, 0, 1);
+    final double height = clampDouble(_extent.value, 0, _sheetHeight);
+    final double sx = width > 0
+        ? 1 - _theme.predictiveBackShrinkX * progress / width
+        : 1;
+    final double sy = height > 0
+        ? 1 - _theme.predictiveBackShrinkY * progress / height
+        : 1;
     return Transform(
       origin: Offset(width / 2, visible),
       transform: Matrix4.diagonal3Values(sx, sy, 1),

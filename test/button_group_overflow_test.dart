@@ -22,6 +22,41 @@ void main() {
     'overflowing scroll overflow keeps offset when selectedIndex changes',
     _overflowingScrollKeepsOffset,
   );
+
+  testWidgets(
+    'menu overflow titles an icon-only action with its semantic label',
+    _menuOverflowTitlesIconOnlyAction,
+  );
+}
+
+Future<void> _menuOverflowTitlesIconOnlyAction(WidgetTester tester) async {
+  await tester.pumpWidget(
+    _themeHost(
+      SizedBox(
+        width: 88,
+        child: M3EButtonGroup(
+          overflow: M3EButtonGroupOverflow.menu,
+          actions: const <M3EButtonGroupAction>[
+            M3EButtonGroupAction(label: Text('Long label one')),
+            M3EButtonGroupAction(
+              icon: Icon(M3EIcons.star),
+              semanticLabel: 'Star action',
+            ),
+          ],
+          onSelectedIndexChanged: (int? index) {},
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+
+  final trigger = find.byIcon(M3EIcons.more_horiz).hitTestable();
+  expect(trigger, findsOneWidget);
+  await tester.tap(trigger);
+  await tester.pumpAndSettle();
+
+  expect(find.text('Star action'), findsOneWidget);
+  expect(find.textContaining('Option '), findsNothing);
 }
 
 Future<void> _fittingScrollKeepsOffset(WidgetTester tester) async {

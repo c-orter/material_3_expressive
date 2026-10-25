@@ -398,11 +398,13 @@ mixin _ButtonGroupOverflowPresenterMixin on State<M3EButtonGroup> {
 
   Widget _overflowMenuTitle(int index) {
     final action = widget.actions[index];
-    if (_isActionSelected(index)) {
-      return action.selectedLabel ??
-          action.label ??
-          Text('Option ${index + 1}');
+    final label = _isActionSelected(index)
+        ? (action.selectedLabel ?? action.label)
+        : (action.label ?? action.selectedLabel);
+    if (label != null) {
+      return label;
     }
-    return action.label ?? action.selectedLabel ?? Text('Option ${index + 1}');
+    final fallback = action.semanticLabel ?? action.tooltip;
+    return fallback == null ? Text('Option ${index + 1}') : Text(fallback);
   }
 }

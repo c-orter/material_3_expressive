@@ -14,17 +14,17 @@ Runtime dependencies are intentionally small — see
 
 ### Samples
 
-| Actions | Selection |
-| :-----: | :-------: |
-| ![Actions — buttons, FABs, and button groups](https://raw.githubusercontent.com/paadevelopments/material_3_expressive/main/assets/asset_1.gif) | ![Selection — segmented controls, chips, menus, and sliders](https://raw.githubusercontent.com/paadevelopments/material_3_expressive/main/assets/asset_2.gif) |
+|                                                                      Actions                                                                      |                                                                            Selection                                                                             |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| ![Actions — buttons, FABs, and button groups](https://raw.githubusercontent.com/paadevelopments/material_3_expressive/main/assets/asset_1_v2.gif) | ![Selection — segmented controls, chips, menus, and sliders](https://raw.githubusercontent.com/paadevelopments/material_3_expressive/main/assets/asset_2_v2.gif) |
 
-| Containment | Navigation |
-| :---------: | :--------: |
-| ![Containment — pickers, cards, lists, and dialogs](https://raw.githubusercontent.com/paadevelopments/material_3_expressive/main/assets/asset_3.gif) | ![Navigation — app bars, tabs, nav bar, and toolbars](https://raw.githubusercontent.com/paadevelopments/material_3_expressive/main/assets/asset_4.gif) |
+|                                                                       Containment                                                                       |                                                                        Navigation                                                                         |
+|:-------------------------------------------------------------------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| ![Containment — pickers, cards, lists, and dialogs](https://raw.githubusercontent.com/paadevelopments/material_3_expressive/main/assets/asset_3_v2.gif) | ![Navigation — app bars, tabs, nav bar, and toolbars](https://raw.githubusercontent.com/paadevelopments/material_3_expressive/main/assets/asset_4_v2.gif) |
 
-| Feedback |
-| :------: |
-| ![Feedback — progress, badges, text fields, and snackbars](https://raw.githubusercontent.com/paadevelopments/material_3_expressive/main/assets/asset_5.gif) |
+|                                                                            Feedback                                                                            |
+|:--------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| ![Feedback — progress, badges, text fields, and snackbars](https://raw.githubusercontent.com/paadevelopments/material_3_expressive/main/assets/asset_5_v2.gif) |
 
 ## Example app
 
@@ -89,7 +89,7 @@ flutter run
 
 ## Migrating to `material_ui`
 
-This package uses [`material_ui`](https://pub.dev/packages/material_ui) `^1.6.0`
+This package uses [`material_ui`](https://pub.dev/packages/material_ui) `^1.8.0`
 for Material widgets (`MaterialApp`, `ThemeData`, `ColorScheme`, and the rest of
 the Material library). **Do not import** `package:flutter/material.dart`.
 
@@ -102,19 +102,37 @@ Apps that still import `package:flutter/material.dart` should switch those
 imports to `package:material_ui/material_ui.dart`. Flutter **3.47.0 or newer**
 (Dart **3.13.0+**) is required (`material_ui` will not resolve on older SDKs).
 
+`material_ui` exports its own `RoundedPolygon` and `CornerRounding`, which clash
+with the [`material_new_shapes`](https://pub.dev/packages/material_new_shapes)
+ones this package re-exports. If you use either name, hide it from the
+`material_ui` import:
+
+```dart
+import 'package:material_ui/material_ui.dart' hide CornerRounding, RoundedPolygon;
+```
+
 `ColorScheme.harmonized()` / `Color.harmonizeWith()` come from
 [`dynamic_color`](https://pub.dev/packages/dynamic_color) `^2.1.0` (re-exported
 through this package). Prefer those APIs rather than a local duplicate.
 
-## What's new in 1.1.6
+## What's new in 1.2.0
 
-Summary of updates since 1.1.5 (details in [`CHANGELOG.md`](CHANGELOG.md)):
+Summary of updates since 1.1.7 (details in [`CHANGELOG.md`](CHANGELOG.md)):
 
-- **Carousel** — `M3ECarouselScrim.gradient` for a scrim that fades in under
-  the text.
-- **Sliders** — inner stop dots now match the end stops in size and color.
-- **Bottom sheets** — a closing sheet no longer bounces back up.
-- **Dependencies** — `material_ui` raised to `^1.6.0`.
+- **Dependencies** — `material_ui` raised to `^1.8.0`. If you import both
+  packages and use `RoundedPolygon` or `CornerRounding`, add
+  `hide CornerRounding, RoundedPolygon` to the `material_ui` import.
+- **Buttons** — an `M3EButton` with only an `icon` or only a `label` renders
+  that content.
+- **Button group, segmented buttons** — nothing takes focus on mount unless an
+  action sets `autofocus`. Icon-only overflow menu items use their
+  `semanticLabel` or `tooltip` as the title, and tapping a connected group no
+  longer shifts its gaps.
+- **Search** — the view field takes focus as soon as the view starts opening.
+- **Date pickers** — `autofocus` on `M3EInputDatePickerFormField` focuses the
+  field.
+- **Theme** — iOS status bar text now contrasts correctly with the theme and
+  with scrims.
 
 ## Installation
 
@@ -122,7 +140,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  material_3_expressive: ^1.1.6
+  material_3_expressive: ^1.2.0
 ```
 
 Then fetch it:
@@ -216,7 +234,10 @@ M3ETheme(
 ```
 
 Use `M3EThemeData.dark(...)` for a dark scheme. If no `M3ETheme` is found,
-components fall back to a default light theme.
+components fall back to a default light theme. Unlike `M3EMaterialApp`, this
+path does not set a system bar style, so wrap your app in an
+`AnnotatedRegion<SystemUiOverlayStyle>` (for example
+`SystemUiOverlayStyle.dark` for a light theme) to restore it after modals close.
 
 ### Accessing theme tokens
 
@@ -1316,14 +1337,6 @@ If this package helps your project:
 - **Star** it on [pub.dev](https://pub.dev/packages/material_3_expressive)
 - **Star or fork** the repo on [GitHub](https://github.com/paadevelopments/material_3_expressive)
 - Share it with others building Material 3 Expressive UIs
-
-### Version 1.1.1 — API compatibility
-
-Version **1.1.1** adds typography foundations (`M3ETypography`, variable-font
-axes, style conversion) and exports `buildM3EThemeDefaults()` and
-`M3EDynamicColorHost` through the public barrel. These changes are **additive**:
-`M3EThemeData.typeScale` remains a baseline alias, and existing component code
-continues to work without migration.
 
 ## Credits
 

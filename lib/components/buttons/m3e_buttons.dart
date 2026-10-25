@@ -289,10 +289,10 @@ class M3EButton extends StatefulWidget {
   /// The child content of the button.
   final Widget? child;
 
-  /// Icon displayed by selection-capable buttons.
+  /// Icon shown by the button; pass null to omit it.
   final Widget? icon;
 
-  /// Label displayed by selection-capable buttons.
+  /// Label shown by the button; pass null to omit it.
   final Widget? label;
 
   /// Icon displayed when [isSelected] is true. Falls back to [icon].

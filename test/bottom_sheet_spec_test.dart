@@ -33,7 +33,7 @@ void main() {
   testWidgets('dark theme: status icons stay light', _darkBars);
   testWidgets('showAdaptive swaps to a side sheet at 840dp', _adaptive);
   testWidgets('inner list grows the sheet before scrolling', _scrollHandOff);
-  testWidgets('predictive back shrinks the sheet', _predictiveBack);
+  testWidgets('theme change keeps the sheet content alive', _themeKeepsContent);
   testWidgets(
     'content resize during exit does not bounce the sheet up',
     _exitResizeNoBounce,
@@ -396,44 +396,39 @@ Future<void> _scrollHandOff(WidgetTester tester) async {
   expect(position.pixels, greaterThan(0), reason: 'then the list scrolls');
 }
 
-Future<void> _predictiveBack(WidgetTester tester) async {
+Future<void> _themeKeepsContent(WidgetTester tester) async {
   final BuildContext context = await _pump(tester, const Size(400, 800));
-  var closed = false;
   M3EBottomSheet.show<void>(
     context,
-    builder: _short,
-  ).then((_) => closed = true);
-  await tester.pumpAndSettle();
-
-  Future<void> send(String method, [Map<String, dynamic>? args]) async {
-    final ByteData data = const StandardMethodCodec().encodeMethodCall(
-      MethodCall(method, args),
-    );
-    await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
-      SystemChannels.backGesture.name,
-      data,
-      (ByteData? _) {},
-    );
-  }
-
-  final args = <String, dynamic>{
-    'touchOffset': <double>[5, 600],
-    'progress': 0.0,
-    'swipeEdge': 0,
-  };
-  await send('startBackGesture', args);
-  await send('updateBackGestureProgress', <String, dynamic>{
-    ...args,
-    'progress': 1.0,
-  });
-  await tester.pump();
-  final Transform transform = tester.widget<Transform>(
-    find.ancestor(of: _surface, matching: find.byType(Transform)).first,
+    initialValue: M3EBottomSheetValue.expanded,
+    builder: _longList,
   );
-  expect(transform.transform.storage[0], closeTo(1 - 48 / 400, 0.001));
-  await send('commitBackGesture');
   await tester.pumpAndSettle();
-  expect(closed, isTrue);
+  await tester.drag(find.text('Row 2'), const Offset(0, -200));
+  await tester.pumpAndSettle();
+  final ScrollableState scrollable = tester.state<ScrollableState>(
+    find.byType(Scrollable),
+  );
+  expect(scrollable.position.pixels, greaterThan(0), reason: 'list scrolled');
+
+  await _pump(
+    tester,
+    const Size(400, 800),
+    theme: M3EThemeData.dark(seedColor: const Color(0xFF6750A4)),
+  );
+  await tester.pumpAndSettle();
+  expect(
+    identical(
+      scrollable,
+      tester.state<ScrollableState>(find.byType(Scrollable)),
+    ),
+    isTrue,
+    reason: 'the brightness flip must keep the sheet content alive',
+  );
+  expect(
+    tester.state<ScrollableState>(find.byType(Scrollable)).position.pixels,
+    scrollable.position.pixels,
+  );
 }
 
 Future<void> _exitResizeNoBounce(WidgetTester tester) async {

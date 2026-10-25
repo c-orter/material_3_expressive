@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -212,7 +214,7 @@ class _M3EBottomSheetModalHostState extends State<M3EBottomSheetModalHost>
 
   @override
   bool handleStartBackGesture(PredictiveBackEvent backEvent) {
-    if (!mounted || !_isCurrent || widget.onDismissRequest != null) {
+    if (!mounted || !_isCurrent) {
       return false;
     }
     _back
@@ -226,8 +228,25 @@ class _M3EBottomSheetModalHostState extends State<M3EBottomSheetModalHost>
     _back.value = backEvent.progress;
   }
 
+  /// Commits through the guard, mirroring Compose's `settleToDismiss`: the
+  /// guard decides whether the sheet closes, and a guard that keeps the sheet
+  /// open (the "collapse one level" case in Compose, which animates its
+  /// predictive back progress back to zero) settles the preview back to rest.
+  /// When the guard allows, the preview stays put while the route exits.
   @override
-  void handleCommitBackGesture() => _close(null);
+  void handleCommitBackGesture() {
+    if (widget.onDismissRequest == null) {
+      _close(null);
+      return;
+    }
+    unawaited(
+      _requestDismiss().then((bool closed) {
+        if (!closed && mounted) {
+          _spring(_back, _theme.settleSpring, 0);
+        }
+      }),
+    );
+  }
 
   @override
   void handleCancelBackGesture() => _spring(_back, _theme.settleSpring, 0);
@@ -271,7 +290,9 @@ class _M3EBottomSheetModalHostState extends State<M3EBottomSheetModalHost>
       entrance: _entrance,
       backProgress: _back,
       handleFocusNode: _handle,
-      overlayStyle: light ? M3EBottomSheetSystemUi.lightSurface : null,
+      overlayStyle: light
+          ? M3EBottomSheetSystemUi.lightSurface
+          : M3EScrimSystemUi.bottomSheetOverlayStyle,
       child: widget.child,
     );
   }

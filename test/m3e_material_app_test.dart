@@ -245,7 +245,7 @@ Future<void> _m3ematerialappAppliesLightOverlayStyleForLightBrightn(
   expect(style.systemNavigationBarColor, Colors.transparent);
   expect(style.statusBarIconBrightness, Brightness.dark);
   expect(style.systemNavigationBarIconBrightness, Brightness.dark);
-  expect(style.statusBarBrightness, Brightness.dark);
+  expect(style.statusBarBrightness, Brightness.light);
   expect(style.systemStatusBarContrastEnforced, isFalse);
   expect(style.systemNavigationBarContrastEnforced, isFalse);
 }
@@ -287,7 +287,7 @@ Future<void> _m3ematerialappUpdatesOverlayStyleAfterBrightnessToggle(
 
   expect(overlayStyle().statusBarIconBrightness, Brightness.light);
   expect(overlayStyle().systemNavigationBarIconBrightness, Brightness.light);
-  expect(overlayStyle().statusBarBrightness, Brightness.light);
+  expect(overlayStyle().statusBarBrightness, Brightness.dark);
 }
 
 Future<void> _m3ematerialappAcceptsDrawundersystembarsWithoutError(

@@ -4,7 +4,8 @@ import 'dart:math' as math;
 import 'package:flutter/physics.dart';
 import 'package:flutter/semantics.dart';
 import 'package:material_3_expressive/foundations/foundations.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:material_ui/material_ui.dart'
+    hide CornerRounding, RoundedPolygon;
 
 import '../styles/m3e_loading_indicator_theme.dart';
 

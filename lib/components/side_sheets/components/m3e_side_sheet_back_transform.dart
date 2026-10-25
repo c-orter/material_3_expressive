@@ -36,23 +36,18 @@ class M3ESideSheetBackTransform extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double p = progress.clamp(0, 1).toDouble();
-    if (p <= 0) {
-      return child;
-    }
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints c) {
         final double w = c.maxWidth;
         final double h = c.maxHeight;
-        if (!w.isFinite || !h.isFinite || w <= 0 || h <= 0) {
-          return child;
-        }
+        final bool sized = w.isFinite && h.isFinite && w > 0 && h > 0;
         final double dx = fromAnchoredEdge
             ? motion.predictiveBackGrowX
             : -motion.predictiveBackShrinkX;
-        final double sx = 1 + dx * p / w;
-        final double sy = 1 - motion.predictiveBackLiftY * p / h;
+        final double sx = sized ? 1 + dx * p / w : 1;
+        final double sy = sized ? 1 - motion.predictiveBackLiftY * p / h : 1;
         return Transform(
-          origin: Offset(anchoredRight ? w : 0, h / 2),
+          origin: sized ? Offset(anchoredRight ? w : 0, h / 2) : null,
           transform: Matrix4.diagonal3Values(sx, sy, 1),
           child: child,
         );

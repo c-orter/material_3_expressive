@@ -9,8 +9,8 @@ class _M3EButtonIconLayout extends StatelessWidget {
     required this.iconAlignment,
   });
 
-  final Widget icon;
-  final Widget label;
+  final Widget? icon;
+  final Widget? label;
   final M3EButtonSize size;
   final IconAlignment iconAlignment;
 
@@ -19,25 +19,33 @@ class _M3EButtonIconLayout extends StatelessWidget {
     final m = M3ETheme.of(context).buttonTheme.measurements(size);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     final maxLines = textScale >= 2.0 ? 2 : 1;
+    final iconWidget = icon == null
+        ? null
+        : RepaintBoundary(
+            child: IconTheme.merge(
+              data: IconThemeData(size: m.iconSize),
+              child: icon!,
+            ),
+          );
+    final labelWidget = label == null
+        ? null
+        : Flexible(
+            child: DefaultTextStyle.merge(
+              maxLines: maxLines,
+              softWrap: maxLines > 1,
+              overflow: TextOverflow.ellipsis,
+              child: label!,
+            ),
+          );
     final children = <Widget>[
-      RepaintBoundary(
-        child: IconTheme.merge(
-          data: IconThemeData(size: m.iconSize),
-          child: icon,
-        ),
-      ),
-      SizedBox(width: m.iconGap),
-      Flexible(
-        child: DefaultTextStyle.merge(
-          maxLines: maxLines,
-          softWrap: maxLines > 1,
-          overflow: TextOverflow.ellipsis,
-          child: label,
-        ),
-      ),
+      ?iconWidget,
+      if (iconWidget != null && labelWidget != null) SizedBox(width: m.iconGap),
+      ?labelWidget,
     ];
 
-    if (iconAlignment == IconAlignment.end) {
+    if (iconAlignment == IconAlignment.end &&
+        iconWidget != null &&
+        labelWidget != null) {
       children.setAll(0, [children[2], children[1], children[0]]);
     }
 

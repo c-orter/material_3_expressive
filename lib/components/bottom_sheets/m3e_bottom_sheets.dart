@@ -13,7 +13,7 @@ import 'utils/m3e_bottom_sheet_spring.dart';
 
 export 'controllers/m3e_bottom_sheet_controller.dart';
 export 'controllers/m3e_bottom_sheet_scroll_controller.dart'
-    show M3EBottomSheetScrollController;
+    show M3EBottomSheetDragTarget, M3EBottomSheetScrollController;
 export 'enums/m3e_bottom_sheet_enums.dart';
 export 'models/m3e_bottom_sheet_labels.dart';
 export 'styles/m3e_bottom_sheet_theme.dart';

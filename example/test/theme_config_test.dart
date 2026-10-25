@@ -80,12 +80,26 @@ Future<void> _openThemeConfig(WidgetTester tester) async {
   await tester.pumpWidget(const ExampleApp());
   await tester.pumpAndSettle();
 
-  await tester.tap(find.byTooltip('Theme settings'));
+  // M3EIconButton shows its tooltip with M3ETooltip, which find.byTooltip
+  // (Flutter's Tooltip only) does not match.
+  await tester.tap(
+    find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is M3EIconButton && widget.tooltip == 'Theme settings',
+    ),
+  );
   await tester.pumpAndSettle();
 }
 
 Future<void> _toggle(WidgetTester tester, String semanticLabel) async {
-  await tester.tap(find.bySemanticsLabel(semanticLabel));
+  // The list row merges the switch's label into its own, so match the
+  // switch widget rather than a semantics node.
+  await tester.tap(
+    find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is M3ESwitch && widget.semanticLabel == semanticLabel,
+    ),
+  );
   await tester.pumpAndSettle();
 }
 

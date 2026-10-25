@@ -45,7 +45,14 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
 
-    expect(find.text('Preview'), findsOneWidget);
+    // The default 800dp test window is narrow, so the controls sit behind
+    // the floating banner and open in a bottom sheet.
+    expect(find.text('Tap for controls'), findsOneWidget);
+
+    await tester.tap(find.text('Tap for controls'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
     expect(find.text('Controls'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

@@ -17,7 +17,7 @@ class M3EScrimSystemUi {
     systemNavigationBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
     systemNavigationBarIconBrightness: Brightness.light,
-    statusBarBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
     systemStatusBarContrastEnforced: false,
     systemNavigationBarContrastEnforced: false,
   );
@@ -27,7 +27,7 @@ class M3EScrimSystemUi {
       SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
         systemStatusBarContrastEnforced: false,
       );
 

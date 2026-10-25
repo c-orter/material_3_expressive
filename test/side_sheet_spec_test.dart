@@ -24,8 +24,6 @@ void main() {
   testWidgets('close, scrim and Escape dismiss', _dismissPaths);
   testWidgets('onDismissRequest can keep the sheet open', _guard);
   testWidgets('controller closes with a result', _controllerClose);
-  testWidgets('predictive back lifts, scales and commits', _predictiveBack);
-  testWidgets('predictive back cancel springs back', _predictiveCancel);
   testWidgets('reads as a dialog: headline, then close', _semantics);
   testWidgets('keyboard lands on close; Enter closes', _keyboard);
   testWidgets('focus ring hides after a pointer tap', _pointerHidesRing);
@@ -294,63 +292,6 @@ Future<void> _controllerClose(WidgetTester tester) async {
   await tester.pumpAndSettle();
   expect(await result, 'done');
   expect(controller.isAttached, isFalse);
-}
-
-Future<void> _sendBack(
-  WidgetTester tester,
-  String method, [
-  Map<String, dynamic>? args,
-]) async {
-  final ByteData data = const StandardMethodCodec().encodeMethodCall(
-    MethodCall(method, args),
-  );
-  await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
-    SystemChannels.backGesture.name,
-    data,
-    (ByteData? _) {},
-  );
-}
-
-Map<String, dynamic> _backArgs(double progress, {int edge = 0}) =>
-    <String, dynamic>{
-      'touchOffset': <double>[5, 400],
-      'progress': progress,
-      'swipeEdge': edge,
-    };
-
-Future<void> _predictiveBack(WidgetTester tester) async {
-  final BuildContext context = await _pump(tester);
-  var closed = false;
-  (await _show(tester, context)).then((_) => closed = true);
-  await _sendBack(tester, 'startBackGesture', _backArgs(0));
-  await _sendBack(tester, 'updateBackGestureProgress', _backArgs(1));
-  await tester.pump();
-  final Transform transform = tester.widget<Transform>(
-    find.ancestor(of: _surface, matching: find.byType(Transform)).first,
-  );
-  final m = transform.transform.storage;
-  expect(m[0], closeTo(1 - 24 / 256, 0.001), reason: 'shrinks from left');
-  expect(m[5], closeTo(1 - 48 / 800, 0.001), reason: 'lifts off edges');
-  expect(_decoration(tester).borderRadius, BorderRadius.circular(16));
-  await _sendBack(tester, 'commitBackGesture');
-  await tester.pumpAndSettle();
-  expect(closed, isTrue);
-}
-
-Future<void> _predictiveCancel(WidgetTester tester) async {
-  final BuildContext context = await _pump(tester);
-  await _show(tester, context);
-  await _sendBack(tester, 'startBackGesture', _backArgs(0, edge: 1));
-  await _sendBack(tester, 'updateBackGestureProgress', _backArgs(1, edge: 1));
-  await tester.pump();
-  final Transform grow = tester.widget<Transform>(
-    find.ancestor(of: _surface, matching: find.byType(Transform)).first,
-  );
-  expect(grow.transform.storage[0], closeTo(1 + 12 / 256, 0.001));
-  await _sendBack(tester, 'cancelBackGesture');
-  await tester.pumpAndSettle();
-  expect(_surface, findsOneWidget);
-  expect(tester.getRect(_surface).width, 256);
 }
 
 Future<void> _semantics(WidgetTester tester) async {

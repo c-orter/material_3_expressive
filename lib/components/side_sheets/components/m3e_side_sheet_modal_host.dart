@@ -140,10 +140,10 @@ class _M3ESideSheetModalHostState extends State<_M3ESideSheetModalHost>
     }
   }
 
-  /// Runs the guard, then pops.
-  Future<void> _requestDismiss() async {
+  /// Runs the guard, then pops. True when the sheet closed.
+  Future<bool> _requestDismiss() async {
     if (_dismissing || !mounted) {
-      return;
+      return false;
     }
     _dismissing = true;
     try {
@@ -151,7 +151,9 @@ class _M3ESideSheetModalHostState extends State<_M3ESideSheetModalHost>
       final bool allowed = guard == null || await guard();
       if (allowed && mounted) {
         _pop();
+        return true;
       }
+      return false;
     } finally {
       _dismissing = false;
     }
@@ -169,7 +171,7 @@ class _M3ESideSheetModalHostState extends State<_M3ESideSheetModalHost>
   @override
   bool handleStartBackGesture(PredictiveBackEvent backEvent) {
     final bool current = ModalRoute.of(context)?.isCurrent ?? false;
-    if (!mounted || !current || widget.onDismissRequest != null) {
+    if (!mounted || !current) {
       return false;
     }
     _fromAnchor = (backEvent.swipeEdge == SwipeEdge.right) == _onRight;
@@ -184,8 +186,24 @@ class _M3ESideSheetModalHostState extends State<_M3ESideSheetModalHost>
     _back.value = backEvent.progress;
   }
 
+  /// Commits through the guard, mirroring Compose's `settleToDismiss`: the
+  /// guard decides whether the sheet closes, and a guard that keeps the sheet
+  /// open settles the preview back to rest. When the guard allows, the
+  /// preview stays put while the route exits.
   @override
-  void handleCommitBackGesture() => close();
+  void handleCommitBackGesture() {
+    if (widget.onDismissRequest == null) {
+      close();
+      return;
+    }
+    unawaited(
+      _requestDismiss().then((bool closed) {
+        if (!closed && mounted) {
+          m3eSideSheetAnimate(context, _back, _motion.settleSpring, 0);
+        }
+      }),
+    );
+  }
 
   @override
   void handleCancelBackGesture() =>
